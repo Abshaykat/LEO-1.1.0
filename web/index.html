@@ -1,0 +1,520 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>L.E.O. Local Assistant</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0b1020;
+      color: #eef2ff;
+    }
+
+    .app {
+      width: min(1000px, 94vw);
+      margin: 30px auto;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 28px;
+    }
+
+    .status {
+      padding: 7px 12px;
+      border-radius: 20px;
+      background: #172033;
+      font-size: 13px;
+    }
+
+    .chat {
+      min-height: 520px;
+      padding: 20px;
+      border: 1px solid #263149;
+      border-radius: 14px;
+      background: #101728;
+      overflow-y: auto;
+    }
+
+    .message {
+      max-width: 82%;
+      padding: 13px 16px;
+      margin: 10px 0;
+      border-radius: 12px;
+      white-space: pre-wrap;
+      line-height: 1.5;
+    }
+
+    .user {
+      margin-left: auto;
+      background: #263b70;
+    }
+
+    .leo {
+      background: #1a2438;
+    }
+
+    .approval {
+      border: 1px solid #7b6a2f;
+      background: #2b2818;
+      padding: 16px;
+      border-radius: 12px;
+      margin: 15px 0;
+    }
+
+    .approval button {
+      margin-top: 12px;
+      padding: 10px 18px;
+      border: 0;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .meta {
+      color: #9aa8c7;
+      font-size: 12px;
+      margin-top: 8px;
+    }
+
+    .composer {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    textarea {
+      flex: 1;
+      resize: vertical;
+      min-height: 54px;
+      padding: 14px;
+      border-radius: 10px;
+      border: 1px solid #33415f;
+      background: #0d1424;
+      color: white;
+      font: inherit;
+    }
+
+    button.send {
+      padding: 0 24px;
+      border: 0;
+      border-radius: 10px;
+      background: #4f7cff;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+    }
+
+    .token {
+      margin-bottom: 15px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #33415f;
+      background: #0d1424;
+      color: white;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="app">
+
+  <header>
+    <div>
+      <h1>🦁 L.E.O.</h1>
+      <div class="meta">
+        Living Ecosystem Orchestrator · Local
+      </div>
+    </div>
+
+    <div id="status" class="status">
+      Checking...
+    </div>
+  </header>
+
+  <div class="token">
+    <input
+      id="token"
+      type="password"
+      placeholder="Paste L.E.O. UI token from terminal"
+    >
+  </div>
+
+  <main id="chat" class="chat">
+    <div class="message leo">
+      L.E.O. local interface is ready.
+      Enter your UI token, then send a message.
+    </div>
+  </main>
+
+  <div class="composer">
+    <textarea
+      id="input"
+      placeholder="Talk to L.E.O..."
+    ></textarea>
+
+    <button
+      class="send"
+      id="send"
+      onclick="sendMessage()"
+    >
+      Send
+    </button>
+  </div>
+
+</div>
+
+<script>
+
+const chat =
+  document.getElementById("chat");
+
+const input =
+  document.getElementById("input");
+
+const token =
+  document.getElementById("token");
+
+const send =
+  document.getElementById("send");
+
+const status =
+  document.getElementById("status");
+
+const conversation = [];
+
+function addMessage(
+  text,
+  type
+) {
+
+  const div =
+    document.createElement("div");
+
+  div.className =
+    `message ${type}`;
+
+  div.textContent =
+    text;
+
+  chat.appendChild(div);
+  chat.scrollTop =
+    chat.scrollHeight;
+}
+
+function addApproval(
+  result
+) {
+
+  const box =
+    document.createElement("div");
+
+  box.className =
+    "approval";
+
+  box.innerHTML = `
+    <strong>Owner approval required</strong>
+    <div class="meta">
+      Tool: ${escapeHtml(result.toolName)}
+    </div>
+    <div class="meta">
+      Approval ID: ${escapeHtml(result.approvalId)}
+    </div>
+    <div class="meta">
+      Trace ID: ${escapeHtml(result.traceId)}
+    </div>
+    <button>
+      Approve & Execute
+    </button>
+  `;
+
+  const button =
+    box.querySelector("button");
+
+  button.onclick =
+    async () => {
+
+      button.disabled = true;
+      button.textContent =
+        "Executing...";
+
+      try {
+
+        const response =
+          await fetch(
+            "/api/approve",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type":
+                  "application/json",
+                "x-leo-token":
+                  token.value.trim()
+              },
+              body:
+                JSON.stringify({
+                  approvalId:
+                    result.approvalId
+                })
+            }
+          );
+
+        const data =
+          await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.error ??
+            "Approval failed."
+          );
+        }
+
+        addResult(data);
+
+      } catch (error) {
+
+        addMessage(
+          `Error: ${error.message}`,
+          "leo"
+        );
+
+        button.disabled =
+          false;
+
+        button.textContent =
+          "Approve & Execute";
+      }
+    };
+
+  chat.appendChild(box);
+  chat.scrollTop =
+    chat.scrollHeight;
+}
+
+function addResult(
+  result
+) {
+
+  if (
+    result.type ===
+    "execution"
+  ) {
+
+    addMessage(
+      result.response +
+      "\n\n" +
+      JSON.stringify(
+        result.result,
+        null,
+        2
+      ),
+      "leo"
+    );
+
+    return;
+  }
+
+  if (
+    result.type ===
+    "approval_required"
+  ) {
+
+    addMessage(
+      result.response,
+      "leo"
+    );
+
+    addApproval(result);
+    return;
+  }
+
+  if (
+    result.type ===
+    "denied"
+  ) {
+
+    addMessage(
+      "DENIED: " +
+      result.response,
+      "leo"
+    );
+
+    return;
+  }
+
+  addMessage(
+    result.response ?? "",
+    "leo"
+  );
+}
+
+async function sendMessage() {
+
+  const message =
+    input.value.trim();
+
+  if (!message) {
+    return;
+  }
+
+  if (!token.value.trim()) {
+
+    addMessage(
+      "Enter the L.E.O. UI token shown in the terminal.",
+      "leo"
+    );
+
+    return;
+  }
+
+  input.value = "";
+
+  addMessage(
+    message,
+    "user"
+  );
+
+  send.disabled =
+    true;
+
+  try {
+
+    const response =
+      await fetch(
+        "/api/chat",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+
+            "x-leo-token":
+              token.value.trim()
+          },
+
+          body:
+            JSON.stringify({
+              userMessage:
+                message,
+
+              conversation:
+                conversation
+            })
+        }
+      );
+
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ??
+        "Request failed."
+      );
+    }
+
+    if (
+      data.type ===
+      "response"
+    ) {
+
+      conversation.push({
+        role: "user",
+        content: message
+      });
+
+      conversation.push({
+        role: "assistant",
+        content:
+          data.response
+      });
+    }
+
+    addResult(data);
+
+  } catch (error) {
+
+    addMessage(
+      `Error: ${error.message}`,
+      "leo"
+    );
+
+  } finally {
+
+    send.disabled =
+      false;
+
+    input.focus();
+  }
+}
+
+function escapeHtml(
+  value
+) {
+
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+input.addEventListener(
+  "keydown",
+  event => {
+
+    if (
+      event.key === "Enter" &&
+      !event.shiftKey
+    ) {
+
+      event.preventDefault();
+      sendMessage();
+    }
+  }
+);
+
+fetch("/api/health")
+  .then(r => r.json())
+  .then(data => {
+
+    status.textContent =
+      `${data.provider} · ${data.model} · ONLINE`;
+
+  })
+  .catch(() => {
+
+    status.textContent =
+      "OFFLINE";
+  });
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,566 @@
+import type {
+  LeoBrain,
+  LeoBrainResponse
+} from "../orchestrator/leo-brain.ts";
+
+import {
+  ActionPlanner
+} from "../actions/action-planner.ts";
+
+import {
+  getTool
+} from "../permissions/tool-registry.ts";
+
+import {
+  retrieveMemories
+} from "../memory/memory-retriever.ts";
+
+import {
+  execute as executeTool
+} from "../execution/execution-engine.ts";
+
+import type {
+  ExecutionDecision
+} from "../execution/execution-gate.ts";
+
+import type {
+  ActionPlan
+} from "../actions/action-plan.ts";
+
+import {
+  createTraceId,
+  recordDecisionTrace
+} from "../audit/decision-trace.ts";
+
+import type {
+  OwnerAuthenticator
+} from "../identity/owner-auth.ts";
+
+export interface LeoRuntimeRequest {
+  userMessage: string;
+  source?: "text" | "voice" | "system";
+  ownerAuthenticated?: boolean;
+  ownerAuthToken?: string;
+
+  ownerId?: string;
+  approvalId?: string;
+  traceId?: string;
+  conversation?: Parameters<
+    LeoBrain["respond"]
+  >[0]["conversation"];
+}
+
+export type LeoRuntimeResult =
+  | {
+      type: "response";
+      response: string;
+      brain?: LeoBrainResponse;
+    }
+  | {
+      type: "approval_required";
+      response: string;
+      approvalId: string;
+      toolName: string;
+      traceId: string;
+    }
+  | {
+      type: "execution";
+      response: string;
+      result: unknown;
+      toolName: string;
+    }
+  | {
+      type: "denied";
+      response: string;
+      toolName: string;
+    };
+
+export class LeoRuntime {
+
+  private readonly planner: ActionPlanner;
+
+  constructor(
+    private readonly brain: LeoBrain,
+    private readonly ownerAuthenticator: OwnerAuthenticator
+  ) {
+    this.planner =
+      new ActionPlanner();
+  }
+
+  private async traceValidationFailure(
+    traceId: string,
+    tool: string,
+    reason: string
+  ): Promise<void> {
+
+    await recordDecisionTrace({
+      traceId,
+      stage:
+        "action_validated",
+      outcome:
+        "deny",
+      tool,
+      reason
+    });
+  }
+
+  async process(
+    request: LeoRuntimeRequest
+  ): Promise<LeoRuntimeResult> {
+
+    const traceId =
+      request.traceId ??
+      createTraceId();
+
+    const ownerAuth =
+      this.ownerAuthenticator.authenticate(
+        request.ownerAuthToken
+      );
+
+    await recordDecisionTrace({
+      traceId,
+      stage:
+        "authorization",
+      outcome:
+        ownerAuth.authenticated
+          ? "allow"
+          : "deny",
+      details: {
+        method:
+          ownerAuth.method
+      }
+    });
+
+    await recordDecisionTrace({
+      traceId,
+      stage:
+        "request_received",
+      outcome:
+        "pending",
+      details: {
+        source:
+          request.source ?? "text",
+      }
+    });
+
+    /*
+     * Preserve the deterministic command path.
+     *
+     * Explicit "run ..." commands go directly through
+     * the existing structured planner and approval boundary.
+     */
+    const deterministicPlan =
+      this.planner.plan(
+        request.userMessage
+      );
+
+    let plan: ActionPlan;
+    let brainResponse:
+      LeoBrainResponse | undefined;
+
+    if (
+      deterministicPlan.type === "action"
+    ) {
+
+      plan =
+        deterministicPlan;
+
+    } else {
+
+      /*
+       * Natural-language requests use the AI brain.
+       */
+      const authenticatedOwnerId =
+        ownerAuth.authenticated
+          ? ownerAuth.ownerId
+          : undefined;
+
+      const memoryResults =
+        authenticatedOwnerId
+          ? await retrieveMemories({
+              ownerId:
+                authenticatedOwnerId,
+
+              query:
+                request.userMessage,
+
+              ownerAuthenticated:
+                true,
+
+              limit:
+                5
+            })
+          : [];
+
+      const memoryContext =
+        memoryResults.length > 0
+          ? memoryResults
+              .map(
+                result =>
+                  `[${result.memory.category}] ${result.memory.content}`
+              )
+              .join("\n")
+          : undefined;
+
+      brainResponse =
+        await this.brain.respond({
+          userMessage:
+            request.userMessage,
+
+          conversation:
+            request.conversation,
+
+          memoryContext
+        });
+
+      if (brainResponse.actionPlan) {
+
+        plan =
+          brainResponse.actionPlan;
+
+      } else {
+
+        plan =
+          await this.planner.planWithAI(
+              request.userMessage,
+              this.brain,
+              request.conversation
+            );
+      }
+    }
+
+    await recordDecisionTrace({
+      traceId,
+      stage:
+        "action_planned",
+      outcome:
+        plan.type === "action"
+          ? "pending"
+          : "allow",
+      tool:
+        plan.type === "action"
+          ? plan.action?.toolName
+          : undefined,
+      reason:
+        plan.type === "action"
+          ? plan.action?.reason
+          : undefined,
+      details: {
+        planType:
+          plan.type,
+        aiGenerated:
+          brainResponse !== undefined
+      }
+    });
+
+    if (
+      plan.type === "response"
+    ) {
+
+      const responseText =
+        plan.response ??
+        brainResponse?.response ??
+        "L.E.O. could not produce a response.";
+
+      if (brainResponse) {
+
+        return {
+          type:
+            "response",
+
+          response:
+            responseText,
+
+          brain:
+            brainResponse
+        };
+
+      }
+
+      return {
+        type:
+          "response",
+
+        response:
+          responseText
+      };
+    }
+
+    if (!plan.action) {
+
+      return {
+        type:
+          "denied",
+
+        response:
+          "L.E.O. could not construct a valid executable action.",
+
+        toolName:
+          "unknown"
+      };
+    }
+
+
+    const action =
+      plan.action;
+
+    /*
+     * Runtime defense-in-depth validation.
+     *
+     * AI-generated actions must never bypass the
+     * runtime execution boundary, even if an invalid
+     * ActionPlan reaches this point.
+     */
+    if (
+      action.toolName !==
+      "pc.run_command"
+    ) {
+      await this.traceValidationFailure(
+        traceId,
+        action.toolName,
+        "Unsupported action tool."
+      );
+
+      return {
+        type:
+          "denied",
+
+        response:
+          "L.E.O. rejected an unsupported action tool.",
+
+        toolName:
+          action.toolName
+      };
+    }
+
+    if (
+      typeof action.parameters !==
+      "object" ||
+      action.parameters === null
+    ) {
+      await this.traceValidationFailure(
+        traceId,
+        action.toolName,
+        "Invalid action parameters."
+      );
+
+      return {
+        type:
+          "denied",
+
+        response:
+          "L.E.O. rejected invalid action parameters.",
+
+        toolName:
+          action.toolName
+      };
+    }
+
+    const parameters =
+      action.parameters as Record<string, unknown>;
+
+    if (
+      typeof parameters.command !==
+        "string" ||
+      parameters.command.trim().length === 0
+    ) {
+      await this.traceValidationFailure(
+        traceId,
+        action.toolName,
+        "Empty or invalid command."
+      );
+
+      return {
+        type:
+          "denied",
+
+        response:
+          "L.E.O. rejected an empty or invalid command.",
+
+        toolName:
+          action.toolName
+      };
+    }
+
+    if (
+      parameters.workingDirectory !==
+      "D:\\LEO"
+    ) {
+      await this.traceValidationFailure(
+        traceId,
+        action.toolName,
+        "Uncontrolled working directory."
+      );
+
+      return {
+        type:
+          "denied",
+
+        response:
+          "L.E.O. rejected an uncontrolled working directory.",
+
+        toolName:
+          action.toolName
+      };
+    }
+
+    if (
+      typeof action.reason !==
+        "string" ||
+      action.reason.trim().length === 0
+    ) {
+      await this.traceValidationFailure(
+        traceId,
+        action.toolName,
+        "Missing or invalid action reason."
+      );
+
+      return {
+        type:
+          "denied",
+
+        response:
+          "L.E.O. rejected an action without a valid reason.",
+
+        toolName:
+          action.toolName
+      };
+    }
+
+    if (!ownerAuth.authenticated) {
+
+      await this.traceValidationFailure(
+        traceId,
+        plan.action.toolName,
+        "Owner authentication is required before executable actions."
+      );
+
+      return {
+        type:
+          "denied",
+
+        response:
+          "Owner authentication is required before executable actions.",
+
+        toolName:
+          plan.action.toolName
+      };
+    }
+    await recordDecisionTrace({
+      traceId,
+      stage:
+        "action_validated",
+      outcome:
+        "allow",
+      tool:
+        action.toolName,
+      reason:
+        action.reason,
+      details: {
+        parametersValidated:
+          true,
+        workingDirectoryControlled:
+          true
+      }
+    });
+
+    const tool =
+      getTool(
+        action.toolName
+      );
+
+    if (!tool) {
+
+      return {
+        type:
+          "denied",
+
+        response:
+          `The requested tool is not registered: ${action.toolName}`,
+
+        toolName:
+          action.toolName
+      };
+    }
+
+    const decision:
+      ExecutionDecision =
+      await executeTool({
+        toolName:
+          tool.name,
+
+        parameters:
+          action.parameters,
+
+        reason:
+          action.reason,
+
+        context: {
+          source:
+            request.source ?? "text",
+
+          ownerAuthenticated:
+            ownerAuth.authenticated
+        },
+
+        approvalId:
+          request.approvalId,
+
+        traceId:
+          traceId
+      });
+
+    if (
+      decision.decision ===
+      "require_approval"
+    ) {
+
+      return {
+        type:
+          "approval_required",
+
+        response:
+          "The action is prepared and requires your approval before execution.",
+
+        approvalId:
+          decision.approvalId,
+
+        toolName:
+          tool.name,
+
+        traceId
+      };
+    }
+
+    if (
+      decision.decision ===
+      "deny"
+    ) {
+
+      return {
+        type:
+          "denied",
+
+        response:
+          decision.reason,
+
+        toolName:
+          tool.name
+      };
+    }
+
+    return {
+      type:
+        "execution",
+
+      response:
+        "The approved action was executed successfully.",
+
+      result:
+        decision.result,
+
+      toolName:
+        tool.name
+    };
+  }
+}

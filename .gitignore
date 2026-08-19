@@ -1,0 +1,26 @@
+# L.E.O. secrets and local configuration
+.env
+.env.*
+!.env.example
+secrets/
+credentials/
+*.pem
+*.key
+
+# L.E.O. runtime workflow state
+workspace/workflows/
+
+# L.E.O. runtime audit state
+workspace/audit/
+
+# L.E.O. runtime memory state
+workspace/memory/
+
+# L.E.O. runtime approval state
+workspace/approvals/
+
+# L.E.O. runtime execution test artifact
+workspace/execution-test.txt
+
+# Node dependencies
+node_modules/
