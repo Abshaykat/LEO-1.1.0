@@ -172,6 +172,25 @@ function parseActionPlan(
 
       const embeddedValue =
         embedded as Record<string, unknown>;
+      if (
+        embeddedValue.type === "workflow"
+      ) {
+
+        const embeddedWorkflowPlan =
+          parseActionPlan(
+            JSON.stringify(
+              embeddedValue
+            )
+          );
+
+        if (
+          embeddedWorkflowPlan?.type ===
+          "workflow"
+        ) {
+          return embeddedWorkflowPlan;
+        }
+      }
+
 
       if (
         embeddedValue.type === "action"
@@ -301,7 +320,7 @@ export class LeoBrain {
           "You are not a generic chatbot. Answer as L.E.O. with a consistent, calm, helpful and practical identity. " +
           "Understand Bangla, English, and natural Bangla-English mixed language (Banglish). " +
           "Normally reply in the language and style used by the owner. Do not switch to unrelated languages unless asked. " +
-          "Use supplied conversation history for references, follow-ups, previous statements, and contextual questions such as মনে আছে আমাকে? " +
+          "Use supplied conversation history for references, follow-ups, previous statements, and contextual questions such as à¦®à¦¨à§‡ à¦†à¦›à§‡ à¦†à¦®à¦¾à¦•à§‡? " +
           "Never pretend to remember context that was not supplied. " +
           "You may reason, analyze, explain, and prepare actions. " +
           "Consequential actions must pass L.E.O.'s permission and owner-approval system. " +
