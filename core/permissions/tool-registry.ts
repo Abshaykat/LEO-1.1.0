@@ -191,6 +191,17 @@ const tools: ToolDefinition[] = [
     aiEnabled: true
   },
   {
+    name: "agent.archive",
+    description: "Archive a local L.E.O. agent definition.",
+    consequence: "The selected local agent will transition to archived state.",
+    risk: "critical",
+    permissions: ["agent_management"],
+    requiresApproval: true,
+    affectsExternalSystems: false,
+    destructive: false,
+    aiEnabled: true
+  },
+  {
     name: "agent.delete",
     description: "Delete a local L.E.O. agent definition.",
     consequence: "The selected local agent definition will be deleted.",
