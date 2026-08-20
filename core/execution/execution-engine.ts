@@ -36,6 +36,7 @@ import {
 import { gitStatus, gitDiff, gitCommit } from "../tools/git-tools.ts";
 import { dockerControl } from "../tools/docker-tools.ts";
 import { createAgent, deleteAgent, listAgents } from "../agents/agent-store.ts";
+import { executeAgentCreate } from "./execute-agent-create.ts";
 import { createEncryptedBackup, verifyEncryptedBackup } from "../backup/backup-manager.ts";
 import { updatePolicy } from "../security/policy-store.ts";
 
@@ -224,14 +225,8 @@ const executor: ToolExecutor = async (tool: ToolDefinition, parameters: unknown)
     case "git.commit": return gitCommit(parameters);
     case "docker.control": return dockerControl(parameters);
     case "agent.list": return listAgents();
-    case "agent.create": {
-      const p = objectParams(parameters);
-      return createAgent({
-        name: String(p.name ?? ""),
-        purpose: String(p.purpose ?? ""),
-        instructions: String(p.instructions ?? "")
-      });
-    }
+    case "agent.create":
+      return executeAgentCreate(parameters);
     case "agent.delete": {
       const p = objectParams(parameters);
       await deleteAgent(String(p.id ?? ""));

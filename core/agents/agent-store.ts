@@ -2,16 +2,15 @@ import { mkdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { AGENT_ROOT } from "../config/leo-config.ts";
+import type { ToolPermission } from "../permissions/tool-registry.ts";
+import type {
+  AgentLifecycleStatus,
+  AgentMemoryPolicy,
+  AgentSecurityPolicy,
+  LeoAgent
+} from "./agent-types.ts";
 
-export interface LeoAgent {
-  id: string;
-  name: string;
-  purpose: string;
-  instructions: string;
-  enabled: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
+export type { LeoAgent };
 
 function filePath(id: string): string {
   if (!/^[a-zA-Z0-9._-]+$/.test(id)) {
@@ -26,52 +25,173 @@ async function ensure(): Promise<void> {
 
 async function save(agent: LeoAgent): Promise<void> {
   await ensure();
+
   const target = filePath(agent.id);
   const temp = `${target}.tmp`;
-  await writeFile(temp, JSON.stringify(agent, null, 2) + "\n", "utf8");
+
+  await writeFile(
+    temp,
+    JSON.stringify(agent, null, 2) + "\n",
+    "utf8"
+  );
+
   await rename(temp, target);
 }
 
 export async function listAgents(): Promise<LeoAgent[]> {
   await ensure();
+
   const { readdir } = await import("node:fs/promises");
-  const entries = await readdir(AGENT_ROOT, { withFileTypes: true });
+
+  const entries = await readdir(
+    AGENT_ROOT,
+    { withFileTypes: true }
+  );
+
   const result: LeoAgent[] = [];
+
   for (const entry of entries) {
-    if (!entry.isFile() || !entry.name.endsWith(".json")) continue;
+    if (
+      !entry.isFile() ||
+      !entry.name.endsWith(".json")
+    ) {
+      continue;
+    }
+
     try {
-      const value = JSON.parse(await readFile(path.join(AGENT_ROOT, entry.name), "utf8")) as LeoAgent;
-      if (value && typeof value.id === "string") result.push(value);
+      const value = JSON.parse(
+        await readFile(
+          path.join(AGENT_ROOT, entry.name),
+          "utf8"
+        )
+      ) as LeoAgent;
+
+      if (
+        value &&
+        typeof value.id === "string" &&
+        typeof value.name === "string"
+      ) {
+        result.push(value);
+      }
     } catch {
-      // Ignore malformed agent files. Diagnostics can report them later.
+      // Ignore malformed agent files.
+      // Diagnostics can report them later.
     }
   }
-  return result.sort((a, b) => a.name.localeCompare(b.name));
+
+  return result.sort(
+    (a, b) => a.name.localeCompare(b.name)
+  );
 }
 
-export async function createAgent(input: Pick<LeoAgent, "name" | "purpose" | "instructions">): Promise<LeoAgent> {
-  if (!input.name.trim() || !input.purpose.trim() || !input.instructions.trim()) {
-    throw new Error("Agent name, purpose and instructions are required.");
+export interface CreateAgentInput {
+  name: string;
+  purpose: string;
+  instructions: string;
+  capabilities?: string[];
+  permissions?: ToolPermission[];
+  memoryPolicy?: AgentMemoryPolicy;
+  securityPolicy?: AgentSecurityPolicy;
+}
+
+export async function createAgent(
+  input: CreateAgentInput
+): Promise<LeoAgent> {
+
+  if (!input.name.trim()) {
+    throw new Error("Agent name is required.");
   }
+
+  if (!input.purpose.trim()) {
+    throw new Error("Agent purpose is required.");
+  }
+
+  if (!input.instructions.trim()) {
+    throw new Error("Agent instructions are required.");
+  }
+
   const now = new Date().toISOString();
+
   const agent: LeoAgent = {
     id: randomUUID(),
+
     name: input.name.trim(),
     purpose: input.purpose.trim(),
     instructions: input.instructions.trim(),
-    enabled: false,
+
+    status: "draft",
+
+    capabilities: [
+      ...new Set(input.capabilities ?? [])
+    ],
+
+    permissions: [
+      ...new Set(input.permissions ?? [])
+    ],
+
+    memoryPolicy: {
+      mode: input.memoryPolicy?.mode ?? "restricted",
+      allowedScopes: [
+        ...new Set(
+          input.memoryPolicy?.allowedScopes ?? []
+        )
+      ]
+    },
+
+    securityPolicy: {
+      allowExternalSystemActions:
+        input.securityPolicy?.allowExternalSystemActions ?? false,
+
+      allowPermissionChanges:
+        input.securityPolicy?.allowPermissionChanges ?? false,
+
+      allowAgentCreation:
+        input.securityPolicy?.allowAgentCreation ?? false,
+
+      allowAutonomousExecution:
+        input.securityPolicy?.allowAutonomousExecution ?? false
+    },
+
+    version: 1,
+
     createdAt: now,
     updatedAt: now
   };
+
+  /*
+   * Factory-created agents must never begin
+   * with delegated authority.
+   */
+  if (
+    agent.securityPolicy.allowExternalSystemActions ||
+    agent.securityPolicy.allowPermissionChanges ||
+    agent.securityPolicy.allowAgentCreation ||
+    agent.securityPolicy.allowAutonomousExecution
+  ) {
+    throw new Error(
+      "Agent authority escalation is not permitted."
+    );
+  }
+
   await save(agent);
+
   return agent;
 }
 
-export async function deleteAgent(id: string): Promise<void> {
+export async function deleteAgent(
+  id: string
+): Promise<void> {
   try {
     await unlink(filePath(id));
   } catch (error) {
-    if (error instanceof Error && "code" in error && error.code === "ENOENT") return;
+    if (
+      error instanceof Error &&
+      "code" in error &&
+      error.code === "ENOENT"
+    ) {
+      return;
+    }
+
     throw error;
   }
 }
