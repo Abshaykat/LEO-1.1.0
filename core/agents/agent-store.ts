@@ -2,6 +2,7 @@ import { mkdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { AGENT_ROOT } from "../config/leo-config.ts";
+import { validateAgentLifecycleTransition } from "./agent-lifecycle-policy.ts";
 import type { ToolPermission } from "../permissions/tool-registry.ts";
 import type {
   AgentLifecycleStatus,
@@ -38,6 +39,60 @@ async function save(agent: LeoAgent): Promise<void> {
   await rename(temp, target);
 }
 
+export async function getAgent(id: string): Promise<LeoAgent | null> {
+  const target = filePath(id);
+
+  try {
+    const raw = await readFile(target, "utf8");
+    return JSON.parse(raw) as LeoAgent;
+  } catch (error) {
+    const code =
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error
+        ? String((error as { code?: unknown }).code)
+        : "";
+
+    if (code === "ENOENT") {
+      return null;
+    }
+
+    throw error;
+  }
+}
+
+export async function transitionAgentLifecycle(
+  id: string,
+  targetStatus: AgentLifecycleStatus
+): Promise<LeoAgent> {
+  const agent = await getAgent(id);
+
+  if (!agent) {
+    throw new Error(`Agent not found: ${id}`);
+  }
+
+  const validation = validateAgentLifecycleTransition(
+    agent.status,
+    targetStatus
+  );
+
+  if (!validation.allowed) {
+    throw new Error(
+      validation.reason ?? "Invalid agent lifecycle transition."
+    );
+  }
+
+  const updated: LeoAgent = {
+    ...agent,
+    status: targetStatus,
+    version: agent.version + 1,
+    updatedAt: new Date().toISOString()
+  };
+
+  await save(updated);
+
+  return updated;
+}
 export async function listAgents(): Promise<LeoAgent[]> {
   await ensure();
 
