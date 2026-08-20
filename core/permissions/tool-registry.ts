@@ -180,6 +180,17 @@ const tools: ToolDefinition[] = [
     aiEnabled: true
   },
   {
+    name: "agent.disable",
+    description: "Disable a local L.E.O. agent definition.",
+    consequence: "The selected local active agent will transition to disabled state.",
+    risk: "critical",
+    permissions: ["agent_management"],
+    requiresApproval: true,
+    affectsExternalSystems: false,
+    destructive: false,
+    aiEnabled: true
+  },
+  {
     name: "agent.delete",
     description: "Delete a local L.E.O. agent definition.",
     consequence: "The selected local agent definition will be deleted.",
