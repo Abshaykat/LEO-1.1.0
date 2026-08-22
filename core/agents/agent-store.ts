@@ -233,6 +233,78 @@ export async function createAgent(
   return agent;
 }
 
+export interface UpdateAgentFields {
+  name?: string;
+  purpose?: string;
+  instructions?: string;
+}
+
+export async function updateAgent(
+  id: string,
+  fields: UpdateAgentFields
+): Promise<LeoAgent> {
+  const agent = await getAgent(id);
+
+  if (!agent) {
+    throw new Error(`Agent not found: ${id}`);
+  }
+
+  const keys = Object.keys(fields);
+
+  if (keys.length === 0) {
+    throw new Error(
+      "Agent update requires at least one mutable field."
+    );
+  }
+
+  const allowed = new Set([
+    "name",
+    "purpose",
+    "instructions"
+  ]);
+
+  for (const key of keys) {
+    if (!allowed.has(key)) {
+      throw new Error(
+        `Agent update field is not permitted: ${key}`
+      );
+    }
+  }
+
+  for (const [key, value] of Object.entries(fields)) {
+    if (
+      typeof value !== "string" ||
+      value.trim().length === 0
+    ) {
+      throw new Error(
+        `Agent update field must be a non-empty string: ${key}`
+      );
+    }
+  }
+
+  const updated: LeoAgent = {
+    ...agent,
+
+    ...(fields.name !== undefined
+      ? { name: fields.name.trim() }
+      : {}),
+
+    ...(fields.purpose !== undefined
+      ? { purpose: fields.purpose.trim() }
+      : {}),
+
+    ...(fields.instructions !== undefined
+      ? { instructions: fields.instructions.trim() }
+      : {}),
+
+    version: agent.version + 1,
+    updatedAt: new Date().toISOString()
+  };
+
+  await save(updated);
+
+  return updated;
+}
 export async function deleteAgent(
   id: string
 ): Promise<void> {

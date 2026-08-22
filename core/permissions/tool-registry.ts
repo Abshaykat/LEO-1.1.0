@@ -169,6 +169,17 @@ const tools: ToolDefinition[] = [
     aiEnabled: true
   },
   {
+    name: "agent.update",
+    description: "Update approved mutable fields of a local L.E.O. agent definition.",
+    consequence: "The selected local agent's approved name, purpose, or instructions will be changed.",
+    risk: "critical",
+    permissions: ["agent_management"],
+    requiresApproval: true,
+    affectsExternalSystems: false,
+    destructive: false,
+    aiEnabled: true
+  },
+  {
     name: "agent.activate",
     description: "Activate a local L.E.O. agent definition.",
     consequence: "The selected local draft agent will transition to active state.",
