@@ -13,6 +13,13 @@ import {
   type UpdateAgentFields
 } from "./agent-store.ts";
 
+import {
+  createAgentLifecycleTraceId,
+  recordAgentLifecycleApprovalRequested,
+  recordAgentLifecycleExecution,
+  recordAgentLifecycleVerification
+} from "./agent-lifecycle-audit.ts";
+
 export type AgentUpdateFields = UpdateAgentFields;
 
 export interface AgentUpdateRequest {
@@ -90,11 +97,22 @@ export async function requestAgentUpdate(
     fields
   };
 
+  const traceId =
+    createAgentLifecycleTraceId();
+
   const approval = await createApprovalRequest(
     tool,
     approvedParameters,
-    `Update L.E.O. agent ${agentId}.`
+    `Update L.E.O. agent ${agentId}.`,
+    traceId
   );
+
+  await recordAgentLifecycleApprovalRequested({
+    traceId,
+    tool: tool.name,
+    agentId,
+    approvalId: approval.id
+  });
 
   return {
     decision: "require_approval",
@@ -128,12 +146,21 @@ export async function executeApprovedAgentUpdate(
     );
   }
 
+  const approvedParameters =
+    await getApprovedUpdateParameters(
+      approvalId
+    );
+
+  const traceId =
+    await getAgentLifecycleTraceId(
+      approvalId
+    );
+
   const approval = await consumeApproval(
     approvalId,
     tool.name,
-    await getApprovedUpdateParameters(
-      approvalId
-    )
+    approvedParameters,
+    traceId
   );
 
   const parameters = approval.parameters as {
@@ -159,10 +186,111 @@ export async function executeApprovedAgentUpdate(
 
   validateUpdateFields(fields);
 
-  return updateAgent(
+  const updated =
+    await updateAgent(
+      agentId,
+      fields
+    );
+
+  await recordAgentLifecycleExecution({
+    traceId,
+    tool: tool.name,
     agentId,
-    fields
+    approvalId
+  });
+
+  const verified =
+    await getAgent(agentId);
+
+  if (!verified) {
+    await recordAgentLifecycleVerification({
+      traceId,
+      tool: tool.name,
+      agentId,
+      approvalId
+    });
+
+    throw new Error(
+      "Updated agent could not be verified."
+    );
+  }
+
+  for (const [key, value] of Object.entries(fields)) {
+    if (
+      verified[key as keyof AgentUpdateFields] !== value
+    ) {
+      await recordAgentLifecycleVerification({
+        traceId,
+        tool: tool.name,
+        agentId,
+        approvalId
+      });
+
+      throw new Error(
+        `Updated field verification failed: ${key}.`
+      );
+    }
+  }
+
+  await recordAgentLifecycleVerification({
+    traceId,
+    tool: tool.name,
+    agentId,
+    approvalId
+  });
+
+  return updated;
+}
+
+async function getAgentLifecycleTraceId(
+  approvalId: string
+): Promise<string> {
+  const {
+    getAuditFilePath
+  } = await import(
+    "../audit/audit-logger.ts"
   );
+
+  const {
+    readFile
+  } = await import(
+    "node:fs/promises"
+  );
+
+  const content =
+    await readFile(
+      getAuditFilePath(),
+      "utf8"
+    );
+
+  const events = content
+    .trim()
+    .split(/\r?\n/)
+    .filter(Boolean)
+    .map(
+      line =>
+        JSON.parse(line) as {
+          type?: string;
+          approvalId?: string;
+          traceId?: string;
+        }
+    );
+
+  const event = events
+    .reverse()
+    .find(
+      item =>
+        item.approvalId === approvalId &&
+        item.traceId
+    );
+
+  if (!event?.traceId) {
+    throw new Error(
+      "Lifecycle trace ID could not be recovered."
+    );
+  }
+
+  return event.traceId;
 }
 
 async function getApprovedUpdateParameters(
