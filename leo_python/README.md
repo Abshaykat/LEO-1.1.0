@@ -1,20 +1,26 @@
 # L.E.O. Pure Python Migration
 
-This is the new Python implementation track for L.E.O. 1.1.0.
+L.E.O. 1.1.0 is being migrated to a Python-first runtime while preserving the security guarantees and owner-control requirements of checkpoint 477cefe.
 
-The historical TypeScript implementation at checkpoint 477cefe is preserved as the recovery/reference baseline. This package is intentionally being rebuilt behind explicit security boundaries.
+Implemented foundations:
+- Mark-inspired multilingual communication
+- AI provider abstraction
+- local Ollama provider
+- persistent local memory and initial retrieval
+- capability registry
+- controlled Agent Factory proposal/approval lifecycle
+- action hashing and approval binding
+- owner-authenticated execution gate
+- JSONL audit logging
 
-Initial migration priorities:
-1. communication and conversational behavior
-2. provider abstraction and local AI
-3. memory/RAG
-4. capability registry
-5. secure execution
-6. Mark computer/voice/vision capabilities
-7. workflows and verification
-8. Agent Factory and controlled AI Workforce
-9. PC application
-10. mobile client
-11. full regression and runtime acceptance
+Next integrations:
+- Mark voice/STT/TTS
+- Mark computer-use, browser, vision and desktop capabilities
+- semantic/vector retrieval
+- workflow persistence/resume
+- diagnostics and recovery
+- full permission/identity/security parity
+- PC and mobile applications
+- full regression and runtime acceptance
 
-No migration milestone is considered complete until it is implemented, tested, and runtime-verified on the owner's PC.
+No component is considered production-complete until it is implemented, tested, and runtime-verified.
