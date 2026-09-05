@@ -9,7 +9,9 @@ let socket: WebSocket | undefined;
 let stopping = false;
 let reconnectTimer: ReturnType<typeof setTimeout> | undefined;
 
-function configured(): boolean { return Boolean(WS_URL && DEVICE_ID && TOKEN); }
+const ENABLED = process.env.LEO_REMOTE_ENABLED?.trim().toLowerCase() === "true";
+
+function configured(): boolean { return ENABLED && Boolean(WS_URL && DEVICE_ID && TOKEN); }
 function send(payload: unknown): void { if (socket?.readyState === WebSocket.OPEN) socket.send(JSON.stringify(payload)); }
 function scheduleReconnect(): void {
   if (stopping || !configured() || reconnectTimer) return;
@@ -17,13 +19,33 @@ function scheduleReconnect(): void {
 }
 
 async function handle(message: any): Promise<void> {
-  if (message?.type !== "execute" && message?.type !== "approve") return;
+  if (message?.type !== "command" && message?.type !== "execute" && message?.type !== "approve") return;
   const request = message.payload as RemoteLeoRequest;
+  const requestId = typeof message.requestId === "string" ? message.requestId : crypto.randomUUID();
+  send({
+    type: "progress",
+    requestId,
+    payload: { status: "running", progress: 15, currentStep: "Remote request accepted by L.E.O. PC" }
+  });
   try {
+    send({
+      type: "progress",
+      requestId,
+      payload: { status: "running", progress: 35, currentStep: "Planning and governance checks" }
+    });
     const result = await processLeoRemote(request);
-    send({ type: "result", requestId: message.requestId, payload: result });
+    send({
+      type: "progress",
+      requestId,
+      payload: {
+        status: result.type === "approval_required" ? "waiting_approval" : "completed",
+        progress: result.type === "approval_required" ? 50 : 100,
+        currentStep: result.type === "approval_required" ? "Waiting for owner approval" : "Execution and verification completed"
+      }
+    });
+    send({ type: "result", requestId, payload: result });
   } catch (error) {
-    send({ type: "result", requestId: message.requestId, payload: { type: "denied", response: error instanceof Error ? error.message : String(error), toolName: "remote" } });
+    send({ type: "result", requestId, payload: { type: "denied", response: error instanceof Error ? error.message : String(error), toolName: "remote" } });
   }
 }
 
