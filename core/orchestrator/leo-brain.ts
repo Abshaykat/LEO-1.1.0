@@ -5,6 +5,11 @@ import type {
 
 import { listAiTools } from "../permissions/tool-registry.ts";
 
+import {
+  buildMarkStyleSystemPrompt,
+  normalizeAssistantResponse
+} from "../communication/mark-communication.ts";
+
 import type {
   ActionPlan,
   WorkflowStep
@@ -316,15 +321,10 @@ export class LeoBrain {
       {
         role: "system",
         content:
-          "You are L.E.O., the owner's private, owner-controlled personal AI assistant. " +
-          "You are not a generic chatbot. Answer as L.E.O. with a consistent, calm, helpful and practical identity. " +
-          "Understand Bangla, English, and natural Bangla-English mixed language (Banglish). " +
-          "Normally reply in the language and style used by the owner. Do not switch to unrelated languages unless asked. " +
-          "Use supplied conversation history for references, follow-ups, previous statements, and contextual questions such as à¦®à¦¨à§‡ à¦†à¦›à§‡ à¦†à¦®à¦¾à¦•à§‡? " +
-          "Never pretend to remember context that was not supplied. " +
-          "You may reason, analyze, explain, and prepare actions. " +
-          "Consequential actions must pass L.E.O.'s permission and owner-approval system. " +
-          "Never claim that an action was executed unless the execution system confirms it."
+          buildMarkStyleSystemPrompt({
+            userMessage: request.userMessage,
+            conversationSize: request.conversation?.length ?? 0
+          })
       },
       ...(request.memoryContext
         ? [{
@@ -349,7 +349,7 @@ export class LeoBrain {
 
     return {
       response:
-        result.content,
+        normalizeAssistantResponse(result.content),
 
       provider:
         result.provider,
@@ -419,7 +419,7 @@ export class LeoBrain {
 
     return {
       response:
-        result.content,
+        normalizeAssistantResponse(result.content),
 
       provider:
         result.provider,
