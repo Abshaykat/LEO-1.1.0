@@ -81,6 +81,22 @@ class NaturalLanguageProvider
   }
 }
 
+
+class ConversationOnlyProvider implements AIProvider {
+  readonly name = "conversation-only-test-provider";
+
+  lastRequest?: AIRequest;
+
+  async generate(request: AIRequest): Promise<AIResponse> {
+    this.lastRequest = request;
+    return {
+      provider: this.name,
+      model: "conversation-only-test-model",
+      content: "Hello Owner. I'm L.E.O. and I'm ready to help. What would you like to do?"
+    };
+  }
+}
+
 async function main(): Promise<void> {
 
   console.log(
@@ -261,6 +277,71 @@ async function main(): Promise<void> {
 
   console.log(
     "PASS: Exact approved AI-generated action reached execution."
+  );
+
+  console.log(
+    "\n[4] Verifying ordinary conversation remains conversational..."
+  );
+
+  const conversationProvider =
+    new ConversationOnlyProvider();
+  const conversationBrain =
+    new LeoBrain(conversationProvider);
+  const conversationRuntime =
+    new LeoRuntime(
+      conversationBrain,
+      createTestOwnerAuthenticator()
+    );
+
+  const conversationResult =
+    await conversationRuntime.process({
+      userMessage:
+        "Hello L.E.O., how are you today?",
+      source:
+        "text",
+      ownerAuthToken:
+        TEST_OWNER_AUTH_TOKEN,
+      conversation: [
+        {
+          role: "user",
+          content: "We are working on L.E.O."
+        },
+        {
+          role: "assistant",
+          content: "Yes, Owner."
+        }
+      ]
+    });
+
+  assert(
+    conversationProvider.lastRequest !== undefined,
+    "Ordinary conversation never reached the L.E.O. brain."
+  );
+
+  assert(
+    conversationProvider.lastRequest!.messages.some(
+      message =>
+        message.role === "user" &&
+        message.content === "We are working on L.E.O."
+    ),
+    "Conversation history was not forwarded to the brain."
+  );
+
+  assert(
+    conversationResult.type === "response",
+    "Ordinary conversation was incorrectly routed into action planning or execution."
+  );
+
+  assert(
+    conversationResult.response.includes("Hello Owner."),
+    "The natural conversational response was not preserved."
+  );
+
+  console.log(
+    "PASS: Ordinary conversation stays conversational without entering execution."
+  );
+  console.log(
+    "PASS: Conversation history is forwarded to the brain."
   );
 
   console.log(
