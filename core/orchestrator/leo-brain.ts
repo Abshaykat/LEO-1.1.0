@@ -304,20 +304,20 @@ function parseActionPlan(
 }
 function sanitizeConversationalOutput(text: string): string {
   let value = text.trim();
-  value = value.replace(/<think>[\\s\\S]*?<\\/think>/gi, "").trim();
-  const proposed = value.search(/(?:^|\\n)\\s*Proposed response:\\s*/i);
+  value = value.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+  const proposed = value.search(/(?:^|\n)\s*Proposed response:\s*/i);
   if (proposed >= 0) {
-    value = value.slice(proposed).replace(/^.*?Proposed response:\\s*/is, "").trim();
+    value = value.slice(proposed).replace(/^.*?Proposed response:\s*/is, "").trim();
   } else {
-    const markers = [/(?:^|\\n)\\s*Translation and context:/i, /(?:^|\\n)\\s*Steps?:/i, /(?:^|\\n)\\s*Important:/i];
+    const markers = [/(?:^|\n)\s*Translation and context:/i, /(?:^|\n)\s*Steps?:/i, /(?:^|\n)\s*Important:/i];
     for (const marker of markers) {
       const match = value.search(marker);
       if (match > 0) { value = value.slice(0, match).trim(); break; }
     }
   }
-  value = value.replace(/^(?:\\d{1,2}\\s+[A-Za-z]+\\s+\\d{4},?\\s+\\d{1,2}:\\d{2}(?::\\d{2})?\\s*\\n?)+/i, "").trim();
-  value = value.replace(/^\\s*```(?:text|markdown)?\\s*/i, "");
-  value = value.replace(/\\s*```\\s*$/i, "").trim();
+  value = value.replace(/^(?:\d{1,2}\s+[A-Za-z]+\s+\d{4},?\s+\d{1,2}:\d{2}(?::\d{2})?\s*\n?)+/i, "").trim();
+  value = value.replace(/^\s*```(?:text|markdown)?\s*/i, "");
+  value = value.replace(/\s*```\s*$/i, "").trim();
   return value || text.trim();
 }
 
