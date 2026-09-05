@@ -302,6 +302,32 @@ function parseActionPlan(
     }
   };
 }
+function sanitizeConversationalOutput(text: string): string {
+  let value = text.trim();
+  value = value.replace(/<think>[\\s\\S]*?<\\/think>/gi, "").trim();
+  const proposed = value.search(/(?:^|\\n)\\s*Proposed response:\\s*/i);
+  if (proposed >= 0) {
+    value = value.slice(proposed).replace(/^.*?Proposed response:\\s*/is, "").trim();
+  } else {
+    const markers = [/(?:^|\\n)\\s*Translation and context:/i, /(?:^|\\n)\\s*Steps?:/i, /(?:^|\\n)\\s*Important:/i];
+    for (const marker of markers) {
+      const match = value.search(marker);
+      if (match > 0) { value = value.slice(0, match).trim(); break; }
+    }
+  }
+  value = value.replace(/^(?:\\d{1,2}\\s+[A-Za-z]+\\s+\\d{4},?\\s+\\d{1,2}:\\d{2}(?::\\d{2})?\\s*\\n?)+/i, "").trim();
+  value = value.replace(/^\\s*```(?:text|markdown)?\\s*/i, "");
+  value = value.replace(/\\s*```\\s*$/i, "").trim();
+  return value || text.trim();
+}
+
+function normalizeConversation(messages: AIMessage[] | undefined): AIMessage[] {
+  if (!messages?.length) return [];
+  return messages.filter(message => (message.role === "user" || message.role === "assistant") && typeof message.content === "string" && message.content.trim().length > 0).slice(-10).map(message => ({
+    role: message.role,
+    content: message.content.trim().slice(-1800)
+  }));
+}
 export type ConversationStyle = "bangla" | "banglish" | "english" | "mixed";
 
 const BANGLISH_MARKERS = [
@@ -385,7 +411,7 @@ export class LeoBrain {
           "Do not turn ordinary greetings, questions or casual conversation into actions. " +
           "Consequential actions must pass L.E.O.'s permission and owner-approval system. Never claim an action was executed unless the execution system confirms it. " +
           languageInstruction(request.userMessage) + " " +
-          "CURRENT DATE/TIME (Bangladesh, Asia/Dhaka): " + localDateTime + ". Treat this as the current date/time for this conversation."
+          "CURRENT DATE/TIME (Bangladesh, Asia/Dhaka): " + localDateTime + ". Treat this as the current date/time for this conversation. /no_think"
       },
       ...(request.memoryContext
         ? [{
@@ -395,7 +421,7 @@ export class LeoBrain {
               request.memoryContext
           }]
         : []),
-      ...(request.conversation ?? []),
+      ...normalizeConversation(request.conversation),
       {
         role: "user",
         content:
@@ -405,7 +431,8 @@ export class LeoBrain {
 
     const result =
       await this.provider.generate({
-        messages
+        messages,
+        maxTokens: 256
       });
 
     /*
@@ -433,7 +460,7 @@ export class LeoBrain {
           ? conversationalFallback(
               request.userMessage
             )
-          : result.content;
+: sanitizeConversationalOutput(result.content);
 
     return {
       response,
@@ -495,7 +522,8 @@ export class LeoBrain {
 
     const result =
       await this.provider.generate({
-        messages
+        messages,
+        maxTokens: 512
       });
 
     return {
