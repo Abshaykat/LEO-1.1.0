@@ -31,6 +31,10 @@ async function main(): Promise<void> {
     "=== L.E.O. REPAIR APPROVAL ROUND-TRIP TEST ==="
   );
 
+  const workingDirectory =
+    process.env.LEO_COMMAND_WORKING_DIRECTORY?.trim() ||
+    "D:\\LEO";
+
   const diagnosticReport: DiagnosticReport = {
     status: "failed",
 
@@ -92,14 +96,9 @@ async function main(): Promise<void> {
   const parameters = {
     command:
       'Write-Output "L.E.O. repair approved"',
-    workingDirectory:
-        workingDirectory
+    workingDirectory
   };
 
-  /*
-   * STEP 1:
-   * Repair must request owner approval.
-   */
   const pending =
     await executeRepair({
       plan: repairPlan,
@@ -136,10 +135,6 @@ async function main(): Promise<void> {
     "PASS: Repair entered owner approval."
   );
 
-  /*
-   * STEP 2:
-   * Explicit owner approval.
-   */
   const approved =
     await approveRequest(
       pending.approvalId,
@@ -155,10 +150,6 @@ async function main(): Promise<void> {
     "PASS: Owner approval recorded."
   );
 
-  /*
-   * STEP 3:
-   * Submit the exact same repair action.
-   */
   const execution =
     await executeRepair({
       plan: repairPlan,
@@ -192,10 +183,6 @@ async function main(): Promise<void> {
     "PASS: Exact approved repair reached execution."
   );
 
-  /*
-   * STEP 4:
-   * Verify execution result.
-   */
   const result =
     execution.result as {
       stdout: string;
@@ -219,10 +206,6 @@ async function main(): Promise<void> {
     "PASS: Repair execution result verified."
   );
 
-  /*
-   * STEP 5:
-   * Approval must not be reusable.
-   */
   let reuseRejected = false;
 
   try {
