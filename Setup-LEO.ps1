@@ -5,7 +5,7 @@ Set-Location $Root
 
 function Require-Command([string]$Name) {
   if (-not (Get-Command $Name -ErrorAction SilentlyContinue)) {
-    throw "$Name is required. Install Node.js 20+ and PowerShell 7, then run setup again."
+    throw "$Name is required. Install Node.js 20+ and Windows PowerShell, then run setup again."
   }
 }
 
@@ -21,13 +21,15 @@ $envPath = Join-Path $Root ".env"
 
 if (-not (Test-Path $envPath)) {
   $tokenBytes = New-Object byte[] 32
-  [System.Security.Cryptography.RandomNumberGenerator]::Fill($tokenBytes)
+  $rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+  $rng.GetBytes($tokenBytes)
   $backupBytes = New-Object byte[] 32
-  [System.Security.Cryptography.RandomNumberGenerator]::Fill($backupBytes)
+  $rng.GetBytes($backupBytes)
+  $rng.Dispose()
 
   $token = [Convert]::ToBase64String($tokenBytes)
   $backupKey = [Convert]::ToBase64String($backupBytes)
-  $portableRoot = $Root.Replace("", "/")
+  $portableRoot = $Root.Replace("\", "/")
 
   $content = @"
 LEO_HOME=$portableRoot
@@ -44,7 +46,7 @@ LEO_UI_TOKEN=$token
 LEO_BACKUP_KEY=$backupKey
 LEO_UI_HOST=127.0.0.1
 LEO_UI_PORT=3000
-LEO_POWERSHELL_EXECUTABLE=pwsh.exe
+LEO_POWERSHELL_EXECUTABLE=powershell.exe
 "@
   Set-Content -LiteralPath $envPath -Value $content -Encoding UTF8
   Write-Host "Created private .env configuration."
