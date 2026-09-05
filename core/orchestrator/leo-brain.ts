@@ -302,6 +302,24 @@ function parseActionPlan(
     }
   };
 }
+function conversationalFallback(
+  userMessage: string
+): string {
+  if (/[\\u0980-\\u09FF]/.test(userMessage)) {
+    return "বুঝেছি, Owner। আমি তোমার সাথে স্বাভাবিকভাবে কথা বলতে পারি। কী জানতে চাও?";
+  }
+
+  if (
+    /\\b(?:ami|tumi|kemon|acho|ache|ki|tomar|amar|bujhlam|bolo|bolte|parbo)\\b/i.test(
+      userMessage
+    )
+  ) {
+    return "Bujhlam, Owner. Ami tomar shathe naturally kotha bolte pari. Ki jante chao?";
+  }
+
+  return "I understand, Owner. I'm here to have a normal conversation with you. What would you like to talk about?";
+}
+
 export class LeoBrain {
 
   constructor(
@@ -351,15 +369,26 @@ export class LeoBrain {
      * Conversation is deliberately response-only.
      *
      * A small local model can occasionally emit JSON/workflow-looking
-     * text even for ordinary questions. Parsing that response as an
-     * executable plan here caused normal conversation to enter the
-     * workflow engine. Executable intent is classified by Runtime and,
-     * only then, sent through planAction().
+     * text even for ordinary questions. Never expose that internal
+     * structure as an executable result. Runtime separately decides
+     * whether the owner's message contains executable intent.
      */
-    return {
-      response:
-        result.content,
+    const parsedConversation =
+      parseActionPlan(
+        result.content
+      );
 
+    const response =
+      parsedConversation?.type === "response"
+        ? parsedConversation.response
+        : parsedConversation
+          ? conversationalFallback(
+              request.userMessage
+            )
+          : result.content;
+
+    return {
+      response,
       provider:
         result.provider,
 
