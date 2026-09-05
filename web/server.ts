@@ -30,7 +30,7 @@ class HttpError extends Error {
 const provider = new OllamaAIProvider({
   model: process.env.LEO_AI_MODEL?.trim() || "qwen3:4b",
   temperature: Number(process.env.LEO_AI_TEMPERATURE || "0.35"),
-  maxTokens: Number(process.env.LEO_AI_MAX_TOKENS || "768"),
+  maxTokens: Number(process.env.LEO_AI_MAX_TOKENS || "512"),
   think: false
 });
 
