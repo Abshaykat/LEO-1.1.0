@@ -66,8 +66,16 @@ npm run ui
 
 Do not copy `node_modules` between operating systems. Run `npm install` on the machine where L.E.O. will run.
 
+## PC app and mobile app
+
+- Windows app-style launcher: `Launch-LEO-App.cmd` opens L.E.O. as a standalone Edge/Chrome application window.
+- Mobile owner console: `mobile/` is an installable PWA with Bangla/English voice input.
+- Optional Internet control: `cloudflare/` contains a Cloudflare Workers + Durable Objects relay. The relay transports authenticated commands only; the Windows PC remains the only execution authority.
+- Remote commands enter the same owner authentication, permission, approval, execution, verification and audit pipeline as local commands.
+- Keep `LEO_REMOTE_ENABLED=false` unless the owner has intentionally configured the private relay.
+
 ## Security model
 
-The AI proposes. Runtime validates. Permission policy decides. Owner approval authorizes consequential actions. Execution consumes the exact approval and records the result.
+The AI proposes. Runtime validates. Permission policy decides. Owner approval authorizes consequential actions. Execution consumes the exact approval and records the result. Windows PowerShell/CMD execution is available through the governed PC command capability and remains approval-gated; remote mobile requests cannot execute directly in the cloud.
 
 L.E.O. never claims execution without an executor result.
