@@ -12,7 +12,7 @@
 <style>
 :root{--bg:#050711;--panel:#0b1020;--panel2:#0e1528;--line:#26304a;--text:#edf4ff;--muted:#8f9ab4;--cyan:#27d9ff;--blue:#5f8cff;--violet:#a96cff;--green:#48e6a1;--amber:#ffc857;--red:#ff657a}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 50% 0,#171333 0,#080b16 35%,var(--bg) 70%);color:var(--text);font:14px Inter,Segoe UI,Arial,sans-serif;min-height:100vh}.app{max-width:1500px;margin:auto;padding:18px}
-.top{height:70px;display:flex;align-items:center;gap:20px;border-bottom:1px solid var(--line);margin-bottom:16px}.brand{display:flex;align-items:center;gap:12px;min-width:255px}.brand img{width:46px;height:46px;filter:drop-shadow(0 0 12px #27d9ff66)}.brand h1{font-size:20px;margin:0}.brand small{color:var(--muted)}.greeting{flex:1}.greeting b{display:block;font-size:16px}.greeting span{color:var(--muted);font-size:12px}.pill{border:1px solid #26324d;background:#0b1222;padding:9px 12px;border-radius:18px;color:#b9c5dc}.live{color:var(--green)}.grid{display:grid;grid-template-columns:220px minmax(500px,1fr) 330px;gap:14px}.card{background:linear-gradient(145deg,#0d1425,#090e1b);border:1px solid var(--line);border-radius:14px;box-shadow:0 10px 30px #0005}.card h3{font-size:11px;letter-spacing:.08em;color:#aab5cb;margin:0 0 12px;text-transform:uppercase}.health{padding:16px;text-align:center}.orb{width:140px;height:140px;border-radius:50%;margin:12px auto 16px;display:grid;place-items:center;background:radial-gradient(circle,#101a32 35%,#0a1020 36%,transparent 60%);border:1px solid #4f7dff;box-shadow:0 0 22px #2e75ff66, inset 0 0 35px #5c2cff44}.orb strong{font-size:34px}.orb span{display:block;color:var(--green);font-size:11px}.healthrow{display:flex;justify-content:space-between;padding:9px 2px;border-top:1px solid #1b2539;color:var(--muted)}.healthrow b{color:var(--text)}.hub{padding:16px;min-height:520px}.hubhead{display:flex;justify-content:space-between}.hubbody{min-height:430px;display:grid;place-items:center;position:relative}.core{width:130px;height:130px;border-radius:50%;display:grid;place-items:center;text-align:center;border:1px solid var(--cyan);box-shadow:0 0 35px #27d9ff55,0 0 90px #7b39ff22;background:radial-gradient(circle,#17243b,#080d19 70%)}.core img{width:42px}.core b{display:block;font-size:12px}.agents{position:absolute;inset:20px}.agent{position:absolute;width:150px;padding:12px;border-radius:11px;border:1px solid #35405b;background:#111a2d;box-shadow:0 8px 22px #0007}.agent b{display:block;font-size:13px}.agent span{color:var(--muted);font-size:11px}.agent i{float:right;width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green)}.a1{top:0;left:calc(50% - 75px)}.a2{top:75px;left:2%}.a3{top:75px;right:2%}.a4{top:200px;left:1%}.a5{top:200px;right:1%}.a6{bottom:45px;left:12%}.a7{bottom:45px;right:12%}.a8{bottom:0;left:calc(50% - 75px)}.right{display:flex;flex-direction:column;gap:14px}.timeline,.decisions,.approvals{padding:16px}.item{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #1b2539}.dot{width:9px;height:9px;border-radius:50%;margin-top:4px;background:var(--cyan);box-shadow:0 0 9px currentColor}.item b{display:block;font-size:12px}.item span{color:var(--muted);font-size:11px}.decision{display:flex;justify-content:space-between;gap:8px;padding:9px;border:1px solid #222d43;border-radius:9px;margin-top:8px}.decision button{background:#182744;color:#9fdfff;border:1px solid #33527b;border-radius:6px;padding:5px 8px}.bottom{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:14px;margin-top:14px}.panel{padding:16px;min-height:180px}.bars{height:90px;display:flex;align-items:end;gap:8px}.bar{flex:1;background:linear-gradient(to top,var(--violet),var(--cyan));border-radius:4px 4px 0 0;min-height:18px}.metric{font-size:30px;margin-top:5px}.voiceRow{display:flex;gap:8px;align-items:center;margin-top:8px}.voiceBtn{background:#121d33;color:#9fe9ff;border:1px solid #31506e;border-radius:9px;padding:8px 12px;font-weight:700}.voiceBtn.recording{background:#3b1720;color:#ff9aa8;border-color:#7b3341}.voiceStatus{color:var(--muted);font-size:11px}.lang{background:#0a1020;color:#dce8ff;border:1px solid var(--line);padding:7px;border-radius:8px}.composer{margin-top:14px;padding:10px;border:1px solid var(--line);border-radius:14px;background:#080d19;display:flex;gap:10px}.composer img{width:34px;height:34px;align-self:end}.composer textarea{flex:1;min-height:52px;max-height:140px;resize:vertical;border:0;outline:0;background:transparent;color:var(--text);font:inherit;padding:8px}.send{background:var(--cyan);color:#031017;border:0;border-radius:10px;padding:0 20px;font-weight:800}.token{margin-top:8px}.token input{width:100%;background:#0a1020;color:#dce8ff;border:1px solid var(--line);padding:9px;border-radius:8px}.chat{max-height:260px;overflow:auto;margin-top:10px}.msg{padding:9px 11px;border-radius:9px;margin:6px 0;white-space:pre-wrap}.msg.user{background:#17294d;margin-left:12%}.msg.leo{background:#111a2b;margin-right:12%}.approvalBox{border:1px solid #735f25;background:#282316;padding:12px;border-radius:9px;margin:8px 0}.approvalBox button{margin-top:8px;padding:7px 10px;border:0;border-radius:6px;font-weight:700}.footer{padding:16px;text-align:center;color:#66718a;font-size:11px}
+.top{height:70px;display:flex;align-items:center;gap:20px;border-bottom:1px solid var(--line);margin-bottom:16px}.brand{display:flex;align-items:center;gap:12px;min-width:255px}.brand img{width:46px;height:46px;filter:drop-shadow(0 0 12px #27d9ff66)}.brand h1{font-size:20px;margin:0}.brand small{color:var(--muted)}.greeting{flex:1}.greeting b{display:block;font-size:16px}.greeting span{color:var(--muted);font-size:12px}.pill{border:1px solid #26324d;background:#0b1222;padding:9px 12px;border-radius:18px;color:#b9c5dc}.live{color:var(--green)}.grid{display:grid;grid-template-columns:220px minmax(500px,1fr) 330px;gap:14px}.card{background:linear-gradient(145deg,#0d1425,#090e1b);border:1px solid var(--line);border-radius:14px;box-shadow:0 10px 30px #0005}.card h3{font-size:11px;letter-spacing:.08em;color:#aab5cb;margin:0 0 12px;text-transform:uppercase}.health{padding:16px;text-align:center}.orb{width:140px;height:140px;border-radius:50%;margin:12px auto 16px;display:grid;place-items:center;background:radial-gradient(circle,#101a32 35%,#0a1020 36%,transparent 60%);border:1px solid #4f7dff;box-shadow:0 0 22px #2e75ff66, inset 0 0 35px #5c2cff44}.orb strong{font-size:34px}.orb span{display:block;color:var(--green);font-size:11px}.healthrow{display:flex;justify-content:space-between;padding:9px 2px;border-top:1px solid #1b2539;color:var(--muted)}.healthrow b{color:var(--text)}.hub{padding:16px;min-height:520px}.hubhead{display:flex;justify-content:space-between}.hubbody{min-height:430px;display:grid;place-items:center;position:relative}.core{width:130px;height:130px;border-radius:50%;display:grid;place-items:center;text-align:center;border:1px solid var(--cyan);box-shadow:0 0 35px #27d9ff55,0 0 90px #7b39ff22;background:radial-gradient(circle,#17243b,#080d19 70%)}.core img{width:42px}.core b{display:block;font-size:12px}.agents{position:absolute;inset:20px}.agent{position:absolute;width:150px;padding:12px;border-radius:11px;border:1px solid #35405b;background:#111a2d;box-shadow:0 8px 22px #0007}.agent b{display:block;font-size:13px}.agent span{color:var(--muted);font-size:11px}.agent i{float:right;width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green)}.a1{top:0;left:calc(50% - 75px)}.a2{top:75px;left:2%}.a3{top:75px;right:2%}.a4{top:200px;left:1%}.a5{top:200px;right:1%}.a6{bottom:45px;left:12%}.a7{bottom:45px;right:12%}.a8{bottom:0;left:calc(50% - 75px)}.right{display:flex;flex-direction:column;gap:14px}.timeline,.decisions,.approvals{padding:16px}.item{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #1b2539}.dot{width:9px;height:9px;border-radius:50%;margin-top:4px;background:var(--cyan);box-shadow:0 0 9px currentColor}.item b{display:block;font-size:12px}.item span{color:var(--muted);font-size:11px}.decision{display:flex;justify-content:space-between;gap:8px;padding:9px;border:1px solid #222d43;border-radius:9px;margin-top:8px}.decision button{background:#182744;color:#9fdfff;border:1px solid #33527b;border-radius:6px;padding:5px 8px}.bottom{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:14px;margin-top:14px}.panel{padding:16px;min-height:180px}.bars{height:90px;display:flex;align-items:end;gap:8px}.bar{flex:1;background:linear-gradient(to top,var(--violet),var(--cyan));border-radius:4px 4px 0 0;min-height:18px}.metric{font-size:30px;margin-top:5px}.voiceRow{display:flex;gap:8px;align-items:center;margin-top:8px}.voiceBtn{background:#121d33;color:#9fe9ff;border:1px solid #31506e;border-radius:9px;padding:8px 12px;font-weight:700}.voiceBtn.recording{background:#3b1720;color:#ff9aa8;border-color:#7b3341}.voiceStatus{color:var(--muted);font-size:11px}.composer{margin-top:14px;padding:10px;border:1px solid var(--line);border-radius:14px;background:#080d19;display:flex;gap:10px}.composer img{width:34px;height:34px;align-self:end}.composer textarea{flex:1;min-height:52px;max-height:140px;resize:vertical;border:0;outline:0;background:transparent;color:var(--text);font:inherit;padding:8px}.send{background:var(--cyan);color:#031017;border:0;border-radius:10px;padding:0 20px;font-weight:800}.token{margin-top:8px}.token input{width:100%;background:#0a1020;color:#dce8ff;border:1px solid var(--line);padding:9px;border-radius:8px}.chat{max-height:260px;overflow:auto;margin-top:10px}.msg{padding:9px 11px;border-radius:9px;margin:6px 0;white-space:pre-wrap}.msg.user{background:#17294d;margin-left:12%}.msg.leo{background:#111a2b;margin-right:12%}.approvalBox{border:1px solid #735f25;background:#282316;padding:12px;border-radius:9px;margin:8px 0}.approvalBox button{margin-top:8px;padding:7px 10px;border:0;border-radius:6px;font-weight:700}.footer{padding:16px;text-align:center;color:#66718a;font-size:11px}
 @media(max-width:1100px){.grid{grid-template-columns:190px 1fr}.right{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,1fr)}.bottom{grid-template-columns:1fr 1fr}.a1,.a8{display:none}}@media(max-width:760px){.app{padding:10px}.grid{grid-template-columns:1fr}.right{display:block}.card{margin-bottom:10px}.bottom{grid-template-columns:1fr}.greeting{display:none}.brand{min-width:0}.hub{min-height:600px}.agent{width:135px}.a2{left:0}.a3{right:0}.a4{left:0}.a5{right:0}.a6{left:0}.a7{right:0}.composer{position:sticky;bottom:8px}}
 </style>
 </head>
@@ -65,7 +65,7 @@
 
 <div class="token"><input id="token" type="password" placeholder="L.E.O. UI token (kept in browser memory only)"></div>
 <div id="chat" class="chat"></div>
-<div class="composer"><img src="/assets/leo-wolf.svg" alt=""><textarea id="input" placeholder="Ask L.E.O. anything… Bangla, English or Banglish."></textarea><button class="send" id="send">Send</button></div><div class="voiceRow"><button class="voiceBtn" id="voiceBtn" type="button">🎙 Voice command</button><select class="lang" id="voiceLang"><option value="bn-BD">Bangla</option><option value="en-US">English / Banglish</option><option value="en-IN">English mixed</option></select><span class="voiceStatus" id="voiceStatus">Voice uses your browser microphone permission and sends only the recognized command text to L.E.O.</span></div>
+<div class="composer"><img src="/assets/leo-wolf.svg" alt=""><textarea id="input" placeholder="Ask L.E.O. anything… Bangla, English or Banglish."></textarea><button class="send" id="send">Send</button></div><div class="voiceRow"><button class="voiceBtn" id="voiceBtn" type="button">🎙 Voice command</button><span class="voiceStatus" id="voiceStatus">Language is detected automatically. Voice uses your browser microphone permission and sends only recognized text to L.E.O.</span></div>
 <div class="footer">L.E.O. 1.1.0 · Owner-controlled · Privacy-first · Approval → Execution → Verification → Audit</div>
 </div>
 <script>
@@ -82,17 +82,82 @@ send.onclick=()=>sendMessage("text");setInterval(refreshWork,1000);input.addEven
 fetch("/api/health").then(r=>r.json()).then(d=>{status.textContent=(d.provider||"local")+" · "+(d.model||"configured")+" · ONLINE";document.getElementById("healthScore").textContent="OK";document.getElementById("healthLabel").textContent="Operational";addTimeline("L.E.O. online",String(d.provider||"Local provider")+" ready")}).catch(()=>{status.textContent="OFFLINE";document.getElementById("healthScore").textContent="--";document.getElementById("healthLabel").textContent="offline";addTimeline("Health check","Local server unavailable")});
 addTimeline("Governance active","Owner approval and audit boundaries enabled");addTimeline("Agent workforce","Controlled roles available");
 
-const voiceBtn=document.getElementById("voiceBtn"),voiceLang=document.getElementById("voiceLang"),voiceStatus=document.getElementById("voiceStatus");
+const voiceBtn=document.getElementById("voiceBtn"),voiceStatus=document.getElementById("voiceStatus");
 const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
 let recognition=null;
+
+function detectInputLanguage(text){
+  const value=String(text||"");
+  if(/[\\u0980-\\u09FF]/.test(value)) return "bn-BD";
+  return "en-US";
+}
+
+function preferredVoiceLanguage(){
+  const recent=conversation.length
+    ? conversation[conversation.length-1]?.content||""
+    : "";
+  if(recent) return detectInputLanguage(recent);
+  return /^bn(?:-|$)/i.test(navigator.language||"")
+    ? "bn-BD"
+    : "en-US";
+}
+
 if(SpeechRecognition){
-  recognition=new SpeechRecognition(); recognition.interimResults=true; recognition.continuous=false; recognition.maxAlternatives=1;
-  recognition.onstart=()=>{voiceBtn.classList.add("recording");voiceBtn.textContent="⏹ Listening…";voiceStatus.textContent="Listening. Speak your L.E.O. command.";};
-  recognition.onerror=e=>{voiceStatus.textContent="Voice error: "+e.error+". Check browser microphone permission.";voiceBtn.classList.remove("recording");voiceBtn.textContent="🎙 Voice command";};
-  recognition.onend=()=>{voiceBtn.classList.remove("recording");voiceBtn.textContent="🎙 Voice command";};
-  recognition.onresult=e=>{let finalText="";for(let i=e.resultIndex;i<e.results.length;i++){if(e.results[i].isFinal)finalText+=e.results[i][0].transcript;}if(finalText.trim()){input.value=finalText.trim();voiceStatus.textContent="Recognized: "+finalText.trim();sendMessage("voice");}};
-  voiceBtn.onclick=()=>{try{if(voiceBtn.classList.contains("recording")) recognition.stop(); else {recognition.lang=voiceLang.value;recognition.start();}}catch(e){voiceStatus.textContent="Could not start microphone: "+e.message;}};
-}else{voiceBtn.disabled=true;voiceStatus.textContent="Voice commands are not supported by this browser. Use a current Chrome/Edge browser or the written command box."}
+  recognition=new SpeechRecognition();
+  recognition.interimResults=true;
+  recognition.continuous=false;
+  recognition.maxAlternatives=1;
+
+  recognition.onstart=()=>{
+    voiceBtn.classList.add("recording");
+    voiceBtn.textContent="⏹ Listening…";
+    voiceStatus.textContent="Listening. L.E.O. will answer in the language you use.";
+  };
+
+  recognition.onerror=e=>{
+    voiceStatus.textContent="Voice error: "+e.error+". Check browser microphone permission.";
+    voiceBtn.classList.remove("recording");
+    voiceBtn.textContent="🎙 Voice command";
+  };
+
+  recognition.onend=()=>{
+    voiceBtn.classList.remove("recording");
+    voiceBtn.textContent="🎙 Voice command";
+  };
+
+  recognition.onresult=e=>{
+    let finalText="";
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      if(e.results[i].isFinal) finalText+=e.results[i][0].transcript;
+    }
+    if(finalText.trim()){
+      const text=finalText.trim();
+      input.value=text;
+      const detected=detectInputLanguage(text);
+      voiceStatus.textContent=
+        detected==="bn-BD"
+          ? "Detected Bangla. L.E.O. will reply in Bangla."
+          : "Detected English/Banglish style. L.E.O. will mirror it.";
+      sendMessage("voice");
+    }
+  };
+
+  voiceBtn.onclick=()=>{
+    try{
+      if(voiceBtn.classList.contains("recording")){
+        recognition.stop();
+      }else{
+        recognition.lang=preferredVoiceLanguage();
+        recognition.start();
+      }
+    }catch(e){
+      voiceStatus.textContent="Could not start microphone: "+e.message;
+    }
+  };
+}else{
+  voiceBtn.disabled=true;
+  voiceStatus.textContent="Voice commands are not supported by this browser. Use a current Chrome/Edge browser.";
+}
 </script>
 <script>if("serviceWorker" in navigator){navigator.serviceWorker.register("/sw.js").catch(()=>{});}</script>
 </body></html>
