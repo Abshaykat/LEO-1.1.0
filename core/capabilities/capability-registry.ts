@@ -224,7 +224,7 @@ createDefaultCapabilityRegistry():
         "Provider-neutral, owner-controlled integration boundary. Live execution requires an explicitly configured provider adapter, credentials, approval and verification.",
       kind: "integration",
       status: "available",
-      tags,
+      tags: [...tags],
       consequential: true
     });
   }
