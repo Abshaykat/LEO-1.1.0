@@ -43,6 +43,16 @@ async function main(): Promise<void> {
   );
 
   assert(
+    html.includes("speechSynthesis"),
+    "Desktop UI must support spoken L.E.O. replies when the browser provides speech synthesis."
+  );
+
+  assert(
+    html.includes("speakLeo"),
+    "Desktop UI must route L.E.O. replies to spoken output."
+  );
+
+  assert(
     html.includes("Language is detected automatically"),
     "Desktop UI must communicate automatic language detection."
   );
