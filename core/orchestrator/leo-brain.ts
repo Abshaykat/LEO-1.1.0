@@ -363,6 +363,13 @@ export class LeoBrain {
     request: LeoBrainRequest
   ): Promise<LeoBrainResponse> {
 
+    const now = new Date();
+    const localDateTime = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Asia/Dhaka",
+      dateStyle: "full",
+      timeStyle: "long"
+    }).format(now);
+
     const messages: AIMessage[] = [
       {
         role: "system",
@@ -377,7 +384,8 @@ export class LeoBrain {
           "Be warm, concise for simple questions, detailed when needed, accurate, practical and non-repetitive. " +
           "Do not turn ordinary greetings, questions or casual conversation into actions. " +
           "Consequential actions must pass L.E.O.'s permission and owner-approval system. Never claim an action was executed unless the execution system confirms it. " +
-          languageInstruction(request.userMessage)
+          languageInstruction(request.userMessage) + " " +
+          "CURRENT DATE/TIME (Bangladesh, Asia/Dhaka): " + localDateTime + ". Treat this as the current date/time for this conversation."
       },
       ...(request.memoryContext
         ? [{
