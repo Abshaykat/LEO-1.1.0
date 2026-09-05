@@ -38,6 +38,9 @@ jobs:
         run: |
           ./Package-LEO.ps1
           if (!(Test-Path "./LEO-1.1.0-windows.zip")) { throw "Package ZIP was not created." }
+          $entries = tar -tf "./LEO-1.1.0-windows.zip"
+          $forbidden = $entries | Where-Object { $_ -match "(^|/)(node_modules|workspace|backups|runtime|logs)(/|$)|(^|/)(\.env|\.env\.)" }
+          if ($forbidden) { throw "Package contains forbidden runtime/secrets entries: $($forbidden -join ", ")" }
       - name: Upload ZIP
         uses: actions/upload-artifact@v4
         with:
