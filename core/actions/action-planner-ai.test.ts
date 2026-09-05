@@ -104,7 +104,7 @@ async function main(): Promise<void> {
 
   assert(
     parameters.workingDirectory ===
-      "D:\\LEO",
+      process.env.LEO_COMMAND_WORKING_DIRECTORY?.trim() || "D:\\LEO",
     "AI did not preserve the controlled working directory."
   );
 
