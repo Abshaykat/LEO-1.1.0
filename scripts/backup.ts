@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { createEncryptedBackup } from "../core/backup/backup-manager.ts";
 
 async function main(): Promise<void> {
