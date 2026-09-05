@@ -15,6 +15,10 @@ import {
   planCapabilities
 } from "../capabilities/capability-planner.ts";
 
+import {
+  COMMAND_WORKING_DIRECTORY
+} from "../config/leo-config.ts";
+
 export class ActionPlanner {
 
   plan(
@@ -52,7 +56,7 @@ export class ActionPlanner {
         parameters: {
           command,
           workingDirectory:
-            "D:\\LEO"
+            COMMAND_WORKING_DIRECTORY
         },
 
         reason:
@@ -111,15 +115,6 @@ export class ActionPlanner {
       const plan =
         aiResult.actionPlan;
 
-      /*
-       * A request that explicitly asks to run one command
-       * must remain a single executable action.
-       *
-       * Local small models can occasionally wrap a single
-       * command inside a one-step workflow. Normalize that
-       * model formatting here without changing LeoBrain's
-       * general workflow support.
-       */
       const singleCommandMatch =
         input.trim().match(
           /^run\s+(?:the\s+)?(?:powershell\s+)?command\s+(.+)$/i
@@ -159,7 +154,7 @@ export class ActionPlanner {
                 parameters: {
                   ...(parameters as Record<string, unknown>),
                   workingDirectory:
-                    "D:\\LEO"
+                    COMMAND_WORKING_DIRECTORY
                 },
 
                 reason:
@@ -173,15 +168,6 @@ export class ActionPlanner {
       return plan;
     }
 
-    /*
-     * Controlled fallback for an explicit single-command request.
-     *
-     * The local model may occasionally return plain natural-language
-     * text instead of a structured action plan. Never infer a command
-     * from arbitrary AI output. When the owner's input explicitly
-     * identifies a PowerShell command, normalize the command directly
-     * from the owner request.
-     */
     const explicitCommandMatch =
       input.trim().match(
         /^run\s+(?:the\s+)?(?:powershell\s+)?command\s+(.+)$/i
@@ -205,7 +191,7 @@ export class ActionPlanner {
             parameters: {
               command,
               workingDirectory:
-                "D:\\LEO"
+                COMMAND_WORKING_DIRECTORY
             },
 
             reason:
