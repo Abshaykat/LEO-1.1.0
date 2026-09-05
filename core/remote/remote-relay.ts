@@ -1,5 +1,6 @@
 import { processLeoRemote, type RemoteLeoRequest } from "../../web/server.ts";
 
+const ENABLED = process.env.LEO_REMOTE_ENABLED?.trim().toLowerCase() === "true";
 const WS_URL = process.env.LEO_REMOTE_WS_URL?.trim();
 const DEVICE_ID = process.env.LEO_REMOTE_DEVICE_ID?.trim();
 const TOKEN = process.env.LEO_REMOTE_TOKEN?.trim();
@@ -40,7 +41,7 @@ function connect(): void {
 }
 
 export function startRemoteRelay(): { enabled: boolean; stop: () => void } {
-  if (!configured()) return { enabled: false, stop: () => {} };
+  if (!ENABLED || !configured()) return { enabled: false, stop: () => {} };
   stopping = false;
   connect();
   return { enabled: true, stop: () => { stopping = true; if (reconnectTimer) clearTimeout(reconnectTimer); reconnectTimer = undefined; try { socket?.close(); } catch {} socket = undefined; } };
