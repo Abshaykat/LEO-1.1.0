@@ -1,0 +1,14 @@
+name = "leo-cloud-relay"
+main = "cloudflare/worker.ts"
+compatibility_date = "2026-08-01"
+
+[vars]
+# Configure REMOTE_TOKEN with: wrangler secret put REMOTE_TOKEN
+
+[[durable_objects.bindings]]
+name = "RELAY"
+class_name = "LeoRelay"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["LeoRelay"]
