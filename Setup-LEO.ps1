@@ -47,6 +47,10 @@ LEO_BACKUP_KEY=$backupKey
 LEO_UI_HOST=127.0.0.1
 LEO_UI_PORT=3000
 LEO_POWERSHELL_EXECUTABLE=powershell.exe
+LEO_REMOTE_ENABLED=false
+LEO_REMOTE_WS_URL=
+LEO_REMOTE_DEVICE_ID=
+LEO_REMOTE_TOKEN=
 "@
   Set-Content -LiteralPath $envPath -Value $content -Encoding UTF8
   Write-Host "Created private .env configuration."
