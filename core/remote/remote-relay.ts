@@ -9,8 +9,6 @@ let socket: WebSocket | undefined;
 let stopping = false;
 let reconnectTimer: ReturnType<typeof setTimeout> | undefined;
 
-const ENABLED = process.env.LEO_REMOTE_ENABLED?.trim().toLowerCase() === "true";
-
 function configured(): boolean { return ENABLED && Boolean(WS_URL && DEVICE_ID && TOKEN); }
 function send(payload: unknown): void { if (socket?.readyState === WebSocket.OPEN) socket.send(JSON.stringify(payload)); }
 function scheduleReconnect(): void {
@@ -22,17 +20,9 @@ async function handle(message: any): Promise<void> {
   if (message?.type !== "command" && message?.type !== "execute" && message?.type !== "approve") return;
   const request = message.payload as RemoteLeoRequest;
   const requestId = typeof message.requestId === "string" ? message.requestId : crypto.randomUUID();
-  send({
-    type: "progress",
-    requestId,
-    payload: { status: "running", progress: 15, currentStep: "Remote request accepted by L.E.O. PC" }
-  });
+  send({ type: "progress", requestId, payload: { status: "running", progress: 15, currentStep: "Remote request accepted by L.E.O. PC" } });
   try {
-    send({
-      type: "progress",
-      requestId,
-      payload: { status: "running", progress: 35, currentStep: "Planning and governance checks" }
-    });
+    send({ type: "progress", requestId, payload: { status: "running", progress: 35, currentStep: "Planning and governance checks" } });
     const result = await processLeoRemote(request);
     send({
       type: "progress",
@@ -63,7 +53,7 @@ function connect(): void {
 }
 
 export function startRemoteRelay(): { enabled: boolean; stop: () => void } {
-  if (!ENABLED || !configured()) return { enabled: false, stop: () => {} };
+  if (!configured()) return { enabled: false, stop: () => {} };
   stopping = false;
   connect();
   return { enabled: true, stop: () => { stopping = true; if (reconnectTimer) clearTimeout(reconnectTimer); reconnectTimer = undefined; try { socket?.close(); } catch {} socket = undefined; } };
