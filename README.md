@@ -45,6 +45,16 @@ Copy `config/.env.example` to `.env` and configure:
 
 On the owner's Windows machine the recommended project root remains `D:\\LEO` and encrypted backups should remain on `E:\\LEO-Backups`.
 
+## Windows owner setup
+
+1. Extract the ZIP to a local folder.
+2. Run `Launch-LEO.cmd` or `Setup-LEO.ps1` from PowerShell.
+3. Setup creates a private `.env`, local workspace and `E:\LEO-Backups`, then installs dependencies.
+4. Use `Show-LEO-Token.ps1` only when the owner needs the private UI token.
+5. The L.E.O. UI is available at `http://127.0.0.1:3000`.
+
+The packaged workforce includes governed Marketing AI (Meta Ads, TikTok Ads, Google Ads), Trading AI (broker/trading), and E-commerce AI (store, CRM, courier, payment) integration boundaries. These are intentionally provider-neutral until the owner configures a specific provider adapter and credentials. Consequential external actions remain approval-gated and verified.
+
 ## Development
 
 ```powershell
