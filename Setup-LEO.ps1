@@ -18,7 +18,6 @@ if ($nodeMajor -lt 20) {
 }
 
 $envPath = Join-Path $Root ".env"
-$examplePath = Join-Path $Root "config\.env.example"
 
 if (-not (Test-Path $envPath)) {
   $tokenBytes = New-Object byte[] 32
@@ -28,17 +27,18 @@ if (-not (Test-Path $envPath)) {
 
   $token = [Convert]::ToBase64String($tokenBytes)
   $backupKey = [Convert]::ToBase64String($backupBytes)
+  $portableRoot = $Root.Replace("", "/")
 
   $content = @"
-LEO_HOME=$($Root.Replace('','\'))
-LEO_WORKSPACE=$((Join-Path $Root 'workspace').Replace('','\'))
-LEO_APPROVAL_ROOT=$((Join-Path $Root 'workspace\approvals').Replace('','\'))
-LEO_WORKFLOW_ROOT=$((Join-Path $Root 'workspace\workflows').Replace('','\'))
-LEO_MEMORY_ROOT=$((Join-Path $Root 'workspace\memory').Replace('','\'))
-LEO_AUDIT_ROOT=$((Join-Path $Root 'workspace\audit').Replace('','\'))
-LEO_AGENT_ROOT=$((Join-Path $Root 'workspace\agents').Replace('','\'))
-LEO_BACKUP_ROOT=E:\LEO-Backups
-LEO_COMMAND_WORKING_DIRECTORY=$($Root.Replace('','\'))
+LEO_HOME=$portableRoot
+LEO_WORKSPACE=$portableRoot/workspace
+LEO_APPROVAL_ROOT=$portableRoot/workspace/approvals
+LEO_WORKFLOW_ROOT=$portableRoot/workspace/workflows
+LEO_MEMORY_ROOT=$portableRoot/workspace/memory
+LEO_AUDIT_ROOT=$portableRoot/workspace/audit
+LEO_AGENT_ROOT=$portableRoot/workspace/agents
+LEO_BACKUP_ROOT=E:/LEO-Backups
+LEO_COMMAND_WORKING_DIRECTORY=$portableRoot
 LEO_OWNER_ID=owner
 LEO_UI_TOKEN=$token
 LEO_BACKUP_KEY=$backupKey
@@ -54,11 +54,11 @@ LEO_POWERSHELL_EXECUTABLE=pwsh.exe
 
 $dirs = @(
   (Join-Path $Root "workspace"),
-  (Join-Path $Root "workspace\approvals"),
-  (Join-Path $Root "workspace\workflows"),
-  (Join-Path $Root "workspace\memory"),
-  (Join-Path $Root "workspace\audit"),
-  (Join-Path $Root "workspace\agents"),
+  (Join-Path $Root "workspace/approvals"),
+  (Join-Path $Root "workspace/workflows"),
+  (Join-Path $Root "workspace/memory"),
+  (Join-Path $Root "workspace/audit"),
+  (Join-Path $Root "workspace/agents"),
   "E:\LEO-Backups"
 )
 foreach ($dir in $dirs) {
@@ -68,6 +68,7 @@ foreach ($dir in $dirs) {
 if (-not (Test-Path (Join-Path $Root "node_modules"))) {
   Write-Host "Installing L.E.O. dependencies..."
   npm ci
+  if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 }
 
 Write-Host ""
