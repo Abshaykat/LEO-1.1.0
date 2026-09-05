@@ -109,7 +109,7 @@ export class OllamaAIProvider implements AIProvider {
             keep_alive: "10m",
 
             options: {
-              num_ctx: 4096,
+              num_ctx: 3072,
               ...(this.temperature !== undefined
                 ? {
                     temperature:
@@ -117,10 +117,10 @@ export class OllamaAIProvider implements AIProvider {
                   }
                 : {}),
 
-              ...(this.maxTokens !== undefined
+              ...((request.maxTokens ?? this.maxTokens) !== undefined
                 ? {
                     num_predict:
-                      this.maxTokens
+                      request.maxTokens ?? this.maxTokens
                   }
                 : {})
             }
