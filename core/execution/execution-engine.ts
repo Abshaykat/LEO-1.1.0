@@ -216,7 +216,9 @@ const executor: ToolExecutor = async (tool: ToolDefinition, parameters: unknown)
     case "pc.read_file": return executeReadFile(parameters);
     case "pc.write_file": return executeWriteFile(parameters);
     case "pc.list_directory": return executeListDirectory(parameters);
-    case "pc.run_command": return executeShell(parameters, "powershell");\n    case "pc.run_powershell": return executeShell(parameters, "powershell");\n    case "pc.run_cmd": return executeShell(parameters, "cmd");
+    case "pc.run_command": return executeShell(parameters, "powershell");
+    case "pc.run_powershell": return executeShell(parameters, "powershell");
+    case "pc.run_cmd": return executeShell(parameters, "cmd");
     case "browser.open": return openBrowser(objectParams(parameters).url);
     case "browser.search": return searchBrowser(objectParams(parameters).query);
     case "web.fetch": return fetchPublicPage(objectParams(parameters).url);
