@@ -16,7 +16,7 @@ async function main(): Promise<void> {
   assert(setup.includes("RandomNumberGenerator"));
   assert(setup.includes("LEO_BACKUP_ROOT=E:/LEO-Backups"));
   assert(launch.includes("npm run ui"));
-  assert(cmd.includes("pwsh.exe"));
+  assert(cmd.includes("powershell.exe"));
   assert(server.includes("Use Show-LEO-Token.ps1"));
   assert(!server.includes("console.log(UI_TOKEN)"));
   assert(pack.includes('"workspace"'));
