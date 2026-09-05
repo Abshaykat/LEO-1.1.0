@@ -10,6 +10,9 @@ async function main(): Promise<void> {
   assert(html.includes('type:"execute"'));
   assert(html.includes('type:"approve"'));
   assert(html.includes("SpeechRecognition"));
+  assert(!html.includes('id="lang"'));
+  assert(html.includes("detectVoiceLanguage"));
+  assert(html.includes("preferredVoiceLanguage"));
   assert(manifest.includes('"display":"standalone"'));
   assert(sw.includes("caches"));
   console.log("PASS: installable mobile console, remote command/approval path and voice input.");
