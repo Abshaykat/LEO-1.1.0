@@ -28,6 +28,26 @@ async function main(): Promise<void> {
   }
 
   assert(
+    !html.includes('id="voiceLang"'),
+    "Desktop UI must not require manual language selection."
+  );
+
+  assert(
+    html.includes("detectInputLanguage"),
+    "Desktop voice input must use automatic language detection."
+  );
+
+  assert(
+    html.includes("preferredVoiceLanguage"),
+    "Desktop voice input must adapt its recognition language automatically."
+  );
+
+  assert(
+    html.includes("Automatically detect the language"),
+    "Desktop UI must communicate automatic language detection."
+  );
+
+  assert(
     html.includes('id="healthScore">OK'),
     "UI must not present a fabricated numeric health score."
   );
