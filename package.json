@@ -37,7 +37,10 @@
                     "test:knowledge": "tsx core/knowledge/local-knowledge.test.ts",
                     "test:workforce": "tsx core/agents/agent-workforce.test.ts && tsx core/agents/agent-workforce-integrations.test.ts",
                     "test:evals": "tsx core/evals/eval-harness.test.ts",
-                    "test:integrations": "tsx core/integrations/mock-integrations.test.ts"
+                    "test:integrations": "tsx core/integrations/mock-integrations.test.ts",
+                    "test:remote": "tsx core/remote/remote-relay.test.ts",
+                    "test:mobile-app": "tsx mobile/mobile-app.test.ts",
+                    "test:app-package": "tsx scripts/app-package.test.ts"
                 },
     "keywords":  [],
     "author":  "",
