@@ -33,6 +33,11 @@ jobs:
         run: npm run test:backup
       - name: Web E2E
         run: npm run test:web-e2e
+      - name: Package and app gates
+        run: npm run test:package
+      - name: Diff check
+        shell: pwsh
+        run: git diff --check
       - name: Package
         shell: pwsh
         run: |
@@ -41,9 +46,15 @@ jobs:
           $entries = tar -tf "./LEO-1.1.0-windows.zip"
           $forbidden = $entries | Where-Object { $_ -match "^(node_modules|workspace|backups|runtime|logs)(/|$)|^(\.env)(/|$)" }
           if ($forbidden) { throw "Package contains forbidden runtime/secrets entries: $($forbidden -join ", ")" }
+      - name: SHA-256
+        shell: pwsh
+        run: |
+          (Get-FileHash "./LEO-1.1.0-windows.zip" -Algorithm SHA256).Hash | Out-File -Encoding ascii "./LEO-1.1.0-windows.zip.sha256"
       - name: Upload ZIP
         uses: actions/upload-artifact@v4
         with:
           name: LEO-1.1.0-windows
-          path: LEO-1.1.0-windows.zip
+          path: |
+            LEO-1.1.0-windows.zip
+            LEO-1.1.0-windows.zip.sha256
           if-no-files-found: error
