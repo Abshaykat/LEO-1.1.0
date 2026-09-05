@@ -32,7 +32,7 @@
                     "diagnose":  "tsx scripts/diagnose.ts",
                     "test:config":  "tsx core/config/leo-config.test.ts",
                     "test:backup":  "tsx core/backup/backup-manager.test.ts",
-                    "test:package": "tsx scripts/windows-package.test.ts",
+                    "test:package": "tsx scripts/windows-package.test.ts && tsx scripts/mobile-access.test.ts",
                     "test:capabilities":  "tsx core/capabilities/capability-discovery.test.ts",
                     "test:knowledge": "tsx core/knowledge/local-knowledge.test.ts",
                     "test:workforce": "tsx core/agents/agent-workforce.test.ts && tsx core/agents/agent-workforce-integrations.test.ts",
