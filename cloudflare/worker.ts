@@ -1,7 +1,5 @@
 export interface Env { RELAY: DurableObjectNamespace; REMOTE_TOKEN: string; }
-
 type Role = "pc" | "mobile";
-type Client = { ws: WebSocket; role: Role; authenticated: boolean };
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -15,7 +13,6 @@ export default {
 };
 
 export class LeoRelay extends DurableObject {
-  private clients = new Map<WebSocket, Client>();
   constructor(ctx: DurableObjectState, private readonly env: Env) { super(ctx, env); }
 
   async fetch(request: Request): Promise<Response> {
@@ -23,7 +20,7 @@ export class LeoRelay extends DurableObject {
     const pair = new WebSocketPair();
     const [client, server] = Object.values(pair);
     this.ctx.acceptWebSocket(server);
-    this.clients.set(server, { ws: server, role: "mobile", authenticated: false });
+    server.serializeAttachment({ role: null, authenticated: false });
     return new Response(null, { status: 101, webSocket: client });
   }
 
@@ -31,30 +28,35 @@ export class LeoRelay extends DurableObject {
     let message: any;
     try { message = JSON.parse(typeof raw === "string" ? raw : new TextDecoder().decode(raw)); }
     catch { ws.close(1003, "Invalid JSON"); return; }
-    const client = this.clients.get(ws);
-    if (!client) return;
-    if (!client.authenticated) {
+
+    const attachment = (ws.deserializeAttachment() || { role: null, authenticated: false }) as { role: Role | null; authenticated: boolean };
+
+    if (!attachment.authenticated) {
       if (message?.type !== "auth" || message.token !== this.env.REMOTE_TOKEN) { ws.close(1008, "Authentication failed"); return; }
-      client.role = message.role === "pc" ? "pc" : "mobile";
-      client.authenticated = true;
-      ws.send(JSON.stringify({ type: "authenticated", role: client.role }));
+      const role: Role = message.role === "pc" ? "pc" : "mobile";
+      ws.serializeAttachment({ role, authenticated: true });
+      ws.send(JSON.stringify({ type: "authenticated", role }));
       this.broadcastStatus();
       return;
     }
+
     if (message?.type === "ping") { ws.send(JSON.stringify({ type: "pong" })); return; }
-    const targetRole: Role = client.role === "mobile" ? "pc" : "mobile";
-    for (const [other, state] of this.clients) {
+
+    const targetRole: Role = attachment.role === "mobile" ? "pc" : "mobile";
+    for (const other of this.ctx.getWebSockets()) {
+      const state = (other.deserializeAttachment() || {}) as { role?: Role; authenticated?: boolean };
       if (state.authenticated && state.role === targetRole && other.readyState === WebSocket.OPEN) other.send(JSON.stringify(message));
     }
   }
 
-  async webSocketClose(ws: WebSocket): Promise<void> { this.clients.delete(ws); this.broadcastStatus(); }
-  async webSocketError(ws: WebSocket): Promise<void> { this.clients.delete(ws); this.broadcastStatus(); }
+  async webSocketClose(): Promise<void> { this.broadcastStatus(); }
+  async webSocketError(): Promise<void> { this.broadcastStatus(); }
 
   private broadcastStatus(): void {
-    const pc = [...this.clients.values()].some(x => x.authenticated && x.role === "pc");
-    const mobile = [...this.clients.values()].some(x => x.authenticated && x.role === "mobile");
+    const sockets = this.ctx.getWebSockets();
+    const pc = sockets.some(ws => { const a = (ws.deserializeAttachment() || {}) as any; return a.authenticated && a.role === "pc"; });
+    const mobile = sockets.some(ws => { const a = (ws.deserializeAttachment() || {}) as any; return a.authenticated && a.role === "mobile"; });
     const payload = JSON.stringify({ type: "status", pcOnline: pc, mobileOnline: mobile });
-    for (const state of this.clients.values()) if (state.authenticated && state.ws.readyState === WebSocket.OPEN) state.ws.send(payload);
+    for (const ws of sockets) if (ws.readyState === WebSocket.OPEN) ws.send(payload);
   }
 }
