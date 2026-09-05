@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Awaitable, Callable
 from uuid import uuid4
 from .approval import ApprovalStore, Approval, consume
+from .action_hash import action_hash
 from .policy import ActionPolicy, Decision, evaluate
 from ..config import CONFIG
 
@@ -40,7 +41,7 @@ async def execute(
                 id=str(uuid4()),
                 tool_name=request.tool_name,
                 parameters=request.parameters,
-                action_hash=__import__("leo_python.security.action_hash", fromlist=["action_hash"]).action_hash(request.tool_name, request.parameters),
+                action_hash=action_hash(request.tool_name, request.parameters),
                 reason=request.reason,
                 created_at=now,
                 expires_at=now + timedelta(seconds=CONFIG.approval_ttl_seconds),
