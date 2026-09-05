@@ -47,18 +47,20 @@
  <aside class="right">
   <div class="card timeline"><h3>AI Activity Timeline · <span class="live">Live</span></h3><div id="timeline"></div></div>
   <div class="card decisions"><h3>Decision Queue · <span class="live">Governed</span></h3>
-   <div class="decision"><span>External action request</span><button>Review</button></div>
-   <div class="decision"><span>Agent capability change</span><button>Review</button></div>
-   <div class="decision"><span>System repair plan</span><button>Review</button></div>
+   <div class="decision"><span>External action request</span><b>Governed</b></div>
+   <div class="decision"><span>Agent capability change</span><b>Governed</b></div>
+   <div class="decision"><span>System repair plan</span><b>Governed</b></div>
   </div>
   <div class="card approvals"><h3>Human Approval Center</h3><div id="approvalList"><div class="meta">No pending approvals.</div></div></div>
  </aside>
 </section>
 
+<section class="card panel" style="margin-top:14px;padding:16px"><h3>Live Work Monitor · <span class="live">Live</span></h3><div id="workMonitor"><div class="meta">No active jobs.</div></div></section>
+
 <section class="bottom">
  <div class="card panel"><h3>Global Operations</h3><div class="metric">Local-first</div><div class="meta">PC · Files · Browser · Git · Docker · Web · External adapters</div></div>
  <div class="card panel"><h3>Predictive / Evaluation</h3><div class="metric" id="evalMetric">Ready</div><div class="meta">Evals run offline; live providers require owner configuration.</div></div>
- <div class="card panel"><h3>Resource Optimization</h3><div class="bars"><div class="bar" style="height:55%"></div><div class="bar" style="height:76%"></div><div class="bar" style="height:43%"></div><div class="bar" style="height:88%"></div><div class="bar" style="height:65%"></div><div class="bar" style="height:94%"></div></div></div>
+ <div class="card panel"><h3>Resource Optimization</h3><div class="metric">Telemetry</div><div class="meta">Live resource telemetry will appear when the PC telemetry provider is enabled.</div></div>
 </section>
 
 <div class="token"><input id="token" type="password" placeholder="L.E.O. UI token (kept in browser memory only)"></div>
@@ -69,12 +71,14 @@
 <script>
 const chat=document.getElementById("chat"),input=document.getElementById("input"),token=document.getElementById("token"),send=document.getElementById("send"),status=document.getElementById("status"),timeline=document.getElementById("timeline"),approvalList=document.getElementById("approvalList");const conversation=[];
 function addMsg(t,c){const d=document.createElement("div");d.className="msg "+c;d.textContent=t;chat.appendChild(d);chat.scrollTop=chat.scrollHeight}
+function renderWorkMonitor(jobs){const el=document.getElementById("workMonitor");if(!jobs.length){el.innerHTML="<div class='meta'>No tracked jobs.</div>";return}el.innerHTML=jobs.map(j=>{const pct=j.progress==null?"?":j.progress+"%";const width=j.progress==null?0:j.progress;return "<div style='padding:10px 0;border-bottom:1px solid #1b2539'><div style='display:flex;justify-content:space-between;gap:10px'><b>"+esc(j.title)+"</b><span class='live'>"+esc(j.status)+"</span></div><div class='meta'>"+esc(j.currentStep)+" · "+pct+"</div><div style='height:6px;background:#151d30;border-radius:4px;margin-top:7px;overflow:hidden'><div style='height:100%;width:"+width+"%;background:var(--cyan)'></div></div></div>"}) .join("")}
+async function refreshWork(){try{const x=await fetch("/api/activity",{headers:{"x-leo-token":token.value.trim()}});if(!x.ok)return;const d=await x.json();renderWorkMonitor(d.jobs||[])}catch{}}
 function addTimeline(title,detail){const d=document.createElement("div");d.className="item";d.innerHTML="<div class='dot'></div><div><b>"+esc(title)+"</b><span>"+esc(detail)+"</span></div>";timeline.prepend(d);while(timeline.children.length>5)timeline.lastChild.remove()}
 function esc(v){return String(v).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
 function approval(r){const b=document.createElement("div");b.className="approvalBox";b.innerHTML="<b>Owner approval required</b><div class='meta'>"+esc(r.toolName)+" · "+esc(r.approvalId)+"</div><button>Approve & Execute</button>";const bt=b.querySelector("button");bt.onclick=async()=>{bt.disabled=true;bt.textContent="Executing…";try{const x=await fetch("/api/approve",{method:"POST",headers:{"Content-Type":"application/json","x-leo-token":token.value.trim()},body:JSON.stringify({approvalId:r.approvalId})});const data=await x.json();if(!x.ok)throw Error(data.error||"Approval failed");addResult(data);addTimeline("Approved action","Execution completed through governed boundary")}catch(e){addMsg("Error: "+e.message,"leo");bt.disabled=false;bt.textContent="Approve & Execute"}};approvalList.replaceChildren(b);chat.appendChild(b)}
 function addResult(r){if(r.type==="approval_required"){addMsg(r.response||"Approval required.","leo");approval(r);return}if(r.type==="denied"){addMsg("DENIED: "+(r.response||""),"leo");return}addMsg((r.response||"")+(r.result?"\n\n"+JSON.stringify(r.result,null,2):""),"leo")}
 async function sendMessage(source="text"){const m=input.value.trim();if(!m)return;if(!token.value.trim()){addMsg("Enter the L.E.O. UI token.","leo");return}input.value="";addMsg(m,"user");send.disabled=true;addTimeline("Owner request",m);try{const x=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json","x-leo-token":token.value.trim()},body:JSON.stringify({userMessage:m,source,conversation})});const d=await x.json();if(!x.ok)throw Error(d.error||"Request failed");if(d.type==="response"){conversation.push({role:"user",content:m},{role:"assistant",content:d.response})}addResult(d)}catch(e){addMsg("Error: "+e.message,"leo")}finally{send.disabled=false;input.focus()}}
-send.onclick=()=>sendMessage("text");input.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendMessage()}});
+send.onclick=()=>sendMessage("text");setInterval(refreshWork,1000);input.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendMessage()}});
 fetch("/api/health").then(r=>r.json()).then(d=>{status.textContent=(d.provider||"local")+" · "+(d.model||"configured")+" · ONLINE";document.getElementById("healthScore").textContent="OK";document.getElementById("healthLabel").textContent="Operational";addTimeline("L.E.O. online",String(d.provider||"Local provider")+" ready")}).catch(()=>{status.textContent="OFFLINE";document.getElementById("healthScore").textContent="--";document.getElementById("healthLabel").textContent="offline";addTimeline("Health check","Local server unavailable")});
 addTimeline("Governance active","Owner approval and audit boundaries enabled");addTimeline("Agent workforce","Controlled roles available");
 
