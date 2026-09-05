@@ -160,7 +160,7 @@ async function executeRunCommand(parameters: unknown): Promise<unknown> {
 
   const executable =
     process.platform === "win32"
-      ? (process.env.LEO_POWERSHELL_EXECUTABLE ?? "pwsh.exe")
+      ? (process.env.LEO_POWERSHELL_EXECUTABLE ?? "powershell.exe")
       : "/bin/sh";
 
   const portableCommand =
