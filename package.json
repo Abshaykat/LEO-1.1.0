@@ -1,4 +1,4 @@
-﻿{
+{
     "name":  "leo",
     "version":  "1.1.0",
     "description":  "Living Ecosystem Orchestrator",
@@ -33,9 +33,7 @@
                     "test:backup":  "tsx core/backup/backup-manager.test.ts",
                     "test:capabilities":  "tsx core/capabilities/capability-discovery.test.ts"
                 },
-    "keywords":  [
-
-                 ],
+    "keywords":  [],
     "author":  "",
     "license":  "ISC",
     "type":  "commonjs",
