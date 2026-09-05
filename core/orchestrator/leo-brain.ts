@@ -319,7 +319,7 @@ export class LeoBrain {
           "You are L.E.O., the owner's private, owner-controlled personal AI assistant. " +
           "You are not a generic chatbot. Answer as L.E.O. with a consistent, calm, helpful and practical identity. " +
           "Understand Bangla, English, and natural Bangla-English mixed language (Banglish). " +
-          "Normally reply in the language and style used by the owner. Do not switch to unrelated languages unless asked. " +
+          "Automatically detect the language and style of each owner message. Reply in the same language and style: Bangla for Bangla script, English for English, Banglish for Bangla-English written in Latin script, and naturally mixed language when the owner mixes languages. Never ask the owner to select a language and never require a language dropdown. " +
           "Use supplied conversation history for references, follow-ups, previous statements, and contextual questions such as à¦®à¦¨à§‡ à¦†à¦›à§‡ à¦†à¦®à¦¾à¦•à§‡? " +
           "Never pretend to remember context that was not supplied. " +
           "You may reason, analyze, explain, and prepare actions. " +
@@ -347,6 +347,15 @@ export class LeoBrain {
         messages
       });
 
+    /*
+     * Conversation is deliberately response-only.
+     *
+     * A small local model can occasionally emit JSON/workflow-looking
+     * text even for ordinary questions. Parsing that response as an
+     * executable plan here caused normal conversation to enter the
+     * workflow engine. Executable intent is classified by Runtime and,
+     * only then, sent through planAction().
+     */
     return {
       response:
         result.content,
@@ -355,12 +364,7 @@ export class LeoBrain {
         result.provider,
 
       model:
-        result.model,
-
-      actionPlan:
-        parseActionPlan(
-          result.content
-        )
+        result.model
     };
   }
 
