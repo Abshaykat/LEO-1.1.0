@@ -28,7 +28,10 @@ class HttpError extends Error {
 }
 
 const provider = new OllamaAIProvider({
-  model: "qwen3:1.7b"
+  model: process.env.LEO_AI_MODEL?.trim() || "qwen3:4b",
+  temperature: Number(process.env.LEO_AI_TEMPERATURE || "0.35"),
+  maxTokens: Number(process.env.LEO_AI_MAX_TOKENS || "768"),
+  think: false
 });
 
 const brain = new LeoBrain(provider);
@@ -493,7 +496,7 @@ export function createLeoServer() {
             ok: true,
             service: "leo-local-ui",
             provider: provider.name,
-            model: "qwen3:1.7b"
+            model: process.env.LEO_AI_MODEL?.trim() || "qwen3:4b"
           });
 
           return;
