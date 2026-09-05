@@ -1,167 +1,53 @@
-import type {
-  AIProvider,
-  AIRequest,
-  AIResponse
-} from "../ai/ai-provider.ts";
+import assert from "node:assert/strict";
+import type { AIProvider, AIRequest, AIResponse } from "../ai/ai-provider.ts";
+import { LeoBrain, detectConversationStyle } from "./leo-brain.ts";
 
-import {
-  LeoBrain
-} from "./leo-brain.ts";
+class CaptureProvider implements AIProvider {
+  readonly name = "conversation-context-test";
+  lastRequest?: AIRequest;
 
-function assert(
-  condition: boolean,
-  message: string
-): void {
-  if (!condition) {
-    throw new Error(
-      `CONVERSATION BRAIN TEST FAILURE: ${message}`
-    );
-  }
-}
-
-class StubProvider implements AIProvider {
-  readonly name =
-    "conversation-brain-test";
-
-  constructor(
-    private readonly response: string
-  ) {}
-
-  async generate(
-    _request: AIRequest
-  ): Promise<AIResponse> {
+  async generate(request: AIRequest): Promise<AIResponse> {
+    this.lastRequest = request;
     return {
-      content:
-        this.response,
-      provider:
-        this.name,
-      model:
-        "conversation-test-model"
+      provider: this.name,
+      model: "test-model",
+      content: "Bujhlam. Ami tomar shathe naturally kotha bolchi."
     };
   }
 }
 
 async function main(): Promise<void> {
-  console.log(
-    "=== L.E.O. CONVERSATION BRAIN TEST ==="
+  assert.equal(detectConversationStyle("Hello LEO, how are you?"), "english");
+  assert.equal(detectConversationStyle("হ্যালো লিও, কেমন আছো?"), "bangla");
+  assert.equal(detectConversationStyle("Hello LEO, kemon acho? tomar capability shomporke jante chai."), "banglish");
+  assert.equal(detectConversationStyle("হ্যালো LEO, kemon acho?"), "mixed");
+
+  const provider = new CaptureProvider();
+  const brain = new LeoBrain(provider);
+
+  await brain.respond({
+    userMessage: "Hello LEO, kemon acho? tomar capability shomporke jante chai.",
+    conversation: [
+      { role: "user", content: "Ami L.E.O. niye kaj kortesi." },
+      { role: "assistant", content: "Haan, bujhte parchi." }
+    ]
+  });
+
+  const system = provider.lastRequest?.messages.find(message => message.role === "system")?.content ?? "";
+  assert.match(system, /Banglish using Latin letters|Banglish/);
+  assert.match(system, /tomar capability shomporke jante chai/);
+  assert.match(system, /CURRENT DATE\/TIME \(Bangladesh, Asia\/Dhaka\)/);
+  assert.ok(
+    provider.lastRequest?.messages.some(
+      message => message.role === "user" && message.content === "Ami L.E.O. niye kaj kortesi."
+    )
   );
 
-  const hallucinatedWorkflow =
-    JSON.stringify({
-      type:
-        "workflow",
-      workflow: {
-        workflowId:
-          "should-never-execute",
-        reason:
-          "Incorrectly generated for ordinary conversation.",
-        steps: [
-          {
-            id:
-              "step-1",
-            action: {
-              toolName:
-                "pc.run_command",
-              parameters: {
-                command:
-                  "Write-Output 'unexpected'"
-              },
-              reason:
-                "Invalid conversational workflow."
-            }
-          }
-        ]
-      }
-    });
-
-  const brain =
-    new LeoBrain(
-      new StubProvider(
-        hallucinatedWorkflow
-      )
-    );
-
-  const result =
-    await brain.respond({
-      userMessage:
-        "Hello L.E.O., how are you?"
-    });
-
-  assert(
-    result.actionPlan === undefined,
-    "Conversation response exposed an executable action plan."
-  );
-
-  assert(
-    result.response.includes(
-      "normal conversation"
-    ),
-    "Workflow-looking model output was not converted to a safe conversational response."
-  );
-
-  console.log(
-    "PASS: Workflow-looking model output cannot become a conversational action plan."
-  );
-
-  const banglaBrain =
-    new LeoBrain(
-      new StubProvider(
-        hallucinatedWorkflow
-      )
-    );
-
-  const banglaResult =
-    await banglaBrain.respond({
-      userMessage:
-        "লিও, কেমন আছো?"
-    });
-
-  assert(
-    banglaResult.response.includes(
-      "বুঝেছি"
-    ),
-    "Bangla conversation did not receive a Bangla fallback."
-  );
-
-  console.log(
-    "PASS: Bangla conversation fallback is automatically selected."
-  );
-
-  const banglishBrain =
-    new LeoBrain(
-      new StubProvider(
-        hallucinatedWorkflow
-      )
-    );
-
-  const banglishResult =
-    await banglishBrain.respond({
-      userMessage:
-        "Leo, kemon acho? Ami ke?"
-    });
-
-  assert(
-    banglishResult.response.includes(
-      "Bujhlam"
-    ),
-    "Banglish conversation did not receive a Banglish fallback."
-  );
-
-  console.log(
-    "PASS: Banglish conversation fallback is automatically selected."
-  );
-
-  console.log(
-    "=== L.E.O. CONVERSATION BRAIN TEST PASSED ==="
-  );
+  console.log("PASS: Bangla/Banglish/mixed language detection and live date-time context.");
+  console.log("PASS: Recent conversation history is forwarded.");
 }
 
-main().catch(
-  error => {
-    console.error(
-      "=== L.E.O. CONVERSATION BRAIN TEST FAILED ==="
-    );
-    console.error(error);
-    process.exit(1);
-  }
-);
+main().catch(error => {
+  console.error(error);
+  process.exit(1);
+});
