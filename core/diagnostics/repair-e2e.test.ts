@@ -57,9 +57,10 @@ async function main(): Promise<void> {
   const traceId =
     "repair-e2e-integration-test";
 
-  /*
-   * STEP 1: Diagnostic
-   */
+  const workingDirectory =
+    process.env.LEO_COMMAND_WORKING_DIRECTORY?.trim() ||
+    "D:\\LEO";
+
   const diagnosticEngine =
     new DiagnosticEngine(
       new TestDiagnosticProvider()
@@ -82,9 +83,6 @@ async function main(): Promise<void> {
     "PASS: Diagnostic failure detected."
   );
 
-  /*
-   * STEP 2: Repair planning
-   */
   const planner =
     new RepairPlanner();
 
@@ -112,14 +110,10 @@ async function main(): Promise<void> {
     "PASS: Repair plan created with approval requirement."
   );
 
-  /*
-   * STEP 3: First execution attempt
-   */
   const parameters = {
     command:
       'Write-Output "L.E.O. repair E2E verified"',
-    workingDirectory:
-      "D:\\LEO"
+    workingDirectory
   };
 
   const pending =
@@ -152,9 +146,6 @@ async function main(): Promise<void> {
     "PASS: Repair entered owner approval boundary."
   );
 
-  /*
-   * STEP 4: Owner approval
-   */
   const approval =
     await approveRequest(
       pending.approvalId,
@@ -175,9 +166,6 @@ async function main(): Promise<void> {
     "PASS: Owner approval recorded with action hash."
   );
 
-  /*
-   * STEP 5: Exact approved execution
-   */
   const execution =
     await executeRepair({
       plan,
@@ -210,9 +198,6 @@ async function main(): Promise<void> {
     "PASS: Exact approved repair executed."
   );
 
-  /*
-   * STEP 6: Verification
-   */
   const result =
     execution.result as {
       stdout: string;
@@ -236,9 +221,6 @@ async function main(): Promise<void> {
     "PASS: Repair execution result verified."
   );
 
-  /*
-   * STEP 7: Approval reuse protection
-   */
   let reuseRejected = false;
 
   try {
@@ -270,17 +252,10 @@ async function main(): Promise<void> {
     "PASS: Consumed repair approval reuse rejected."
   );
 
-  /*
-   * STEP 8: Tamper protection
-   *
-   * A fresh approval is created so the tamper test
-   * does not depend on the already-consumed approval.
-   */
   const secondParameters = {
     command:
       'Write-Output "ORIGINAL REPAIR"',
-    workingDirectory:
-      "D:\\LEO"
+    workingDirectory
   };
 
   const secondPending =
@@ -325,8 +300,7 @@ async function main(): Promise<void> {
       parameters: {
         command:
           'Write-Output "TAMPERED REPAIR"',
-        workingDirectory:
-          "D:\\LEO"
+        workingDirectory
       },
       reason:
         "Tampered repair attempt.",
