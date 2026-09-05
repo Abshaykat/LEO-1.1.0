@@ -81,9 +81,8 @@ console.log("");
 console.log("=== L.E.O. LOCAL UI ===");
 console.log(`http://${HOST}:${PORT}`);
 console.log("");
-console.log("L.E.O. UI TOKEN:");
-console.log(UI_TOKEN);
-console.log("");
+console.log("L.E.O. UI token loaded from private configuration.");
+console.log("Use Show-LEO-Token.ps1 to retrieve it when needed.");
 console.log("Keep this terminal open while using L.E.O.");
 console.log("");
 
