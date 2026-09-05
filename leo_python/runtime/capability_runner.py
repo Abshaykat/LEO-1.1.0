@@ -1,9 +1,9 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Awaitable, Callable
 from .controlled_executor import ControlledExecutor, ExecutionResult
 from ..capabilities import CapabilityRegistry
-from ..governance import AuditSink, ExecutionGuard, ApprovalStore, Verifier
+from ..governance import AuditSink, ExecutionGuard, Verifier, ApprovalStore
 
 @dataclass(frozen=True)
 class CapabilityRunRequest:
@@ -11,9 +11,10 @@ class CapabilityRunRequest:
     parameters: dict[str, Any]
     approval_id: str | None = None
     requires_approval: bool = False
+    postcondition: Callable[[Any], bool] | None = None
 
 class CapabilityRunner:
-    """Resolves registered capabilities and delegates execution to the guarded runtime."""
+    """Resolves registered capabilities and delegates to the guarded runtime."""
 
     def __init__(self, registry: CapabilityRegistry, approvals: ApprovalStore,
                  audit: AuditSink | None = None) -> None:
@@ -29,14 +30,9 @@ class CapabilityRunner:
         if capability is None:
             self.audit.record("capability.rejected", capability=request.capability)
             return ExecutionResult(False, False, False, reason="Capability unavailable.")
-        action = {
-            "capability": request.capability,
-            "parameters": request.parameters,
-        }
+        action = {"capability": request.capability, "parameters": request.parameters}
         return await self.executor.run(
-            request.approval_id,
-            action,
-            capability.execute,
+            request.approval_id, action, capability.execute,
             requires_approval=request.requires_approval,
-            postcondition=None,
+            postcondition=request.postcondition,
         )
