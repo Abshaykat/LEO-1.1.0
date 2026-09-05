@@ -96,7 +96,7 @@ function looksLikeExecutableRequest(
   }
 
   const executableIntent =
-    /\b(?:open|close|run|execute|create|make|write|read|edit|delete|remove|move|copy|rename|install|uninstall|start|stop|restart|shutdown|sleep|test|check|fix|repair|update|build|deploy|clone|commit|push|pull|checkout|browse|visit|click|download|upload|launch|kill|terminate|automate|schedule|run|powershell|power\s*shell|cmd|command|notepad|github|git|docker|browser|file|folder|workflow|script|terminal)\b/i;
+    /\b(?:open|close|run|execute|create|make|write|read|edit|delete|remove|move|copy|rename|install|uninstall|start|stop|restart|shutdown|sleep|test|check|fix|repair|update|build|deploy|clone|commit|push|pull|checkout|browse|visit|click|download|upload|launch|kill|terminate|automate|schedule|action|workflow|run|powershell|power\s*shell|cmd|command|notepad|github|git|docker|browser|file|folder|workflow|script|terminal)\b/i;
 
   const banglaExecutableIntent =
     /(খুলো|খুলে|চালাও|রান|এক্সিকিউট|করো|করে দাও|তৈরি করো|বানাও|লিখো|পড়ো|পড়ো|এডিট|ডিলিট|মুছে|সরাও|কপি|নাম বদল|ইনস্টল|আনইনস্টল|শুরু করো|বন্ধ করো|রিস্টার্ট|শাটডাউন|ঘুম|টেস্ট করো|চেক করো|ফিক্স করো|ঠিক করো|আপডেট করো|বিল্ড করো|ডিপ্লয়|ক্লোন|কমিট|পুশ|পুল|ব্রাউজার|ফাইল|ফোল্ডার|ওয়ার্কফ্লো|ওয়ার্কফ্লো|স্ক্রিপ্ট|কমান্ড|পাওয়ারশেল|পাওয়ারশেল|সিএমডি|নোটপ্যাড|গিটহাব|গিট|ডকার)/i;
