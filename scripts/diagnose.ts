@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { getConfigSummary } from "../core/config/leo-config.ts";
 import { listTools } from "../core/permissions/tool-registry.ts";
 import { listBackups } from "../core/backup/backup-manager.ts";
