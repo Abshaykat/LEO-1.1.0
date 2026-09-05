@@ -43,7 +43,7 @@ async function main(): Promise<void> {
   );
 
   assert(
-    html.includes("Automatically detect the language"),
+    html.includes("Language is detected automatically"),
     "Desktop UI must communicate automatic language detection."
   );
 
