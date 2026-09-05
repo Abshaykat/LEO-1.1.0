@@ -33,11 +33,15 @@ async function main() {
     executed: boolean;
   }
 
+  const workingDirectory =
+    process.env.LEO_COMMAND_WORKING_DIRECTORY?.trim() ||
+    "D:\\LEO";
+
   const action: PlannedAction = {
     toolName: "pc.run_command",
     parameters: {
       command: 'Write-Output "Workflow integration test"',
-      workingDirectory: "D:\\LEO"
+      workingDirectory
     },
     reason:
       "Verify workflow approval and execution integration."
@@ -96,10 +100,6 @@ async function main() {
     }
   };
 
-  /*
-   * 1. Start workflow.
-   */
-
   const paused =
     await runWorkflow(
       definition,
@@ -126,10 +126,6 @@ async function main() {
     "PASS: Workflow paused for owner approval."
   );
 
-  /*
-   * 2. Verify workflow state persisted.
-   */
-
   const stored =
     await loadPausedWorkflow<State>(
       definition.id
@@ -152,10 +148,6 @@ async function main() {
   console.log(
     "PASS: Paused workflow persisted."
   );
-
-  /*
-   * 4. Load the approval directly and approve it.
-   */
 
   const {
     approveRequest,
@@ -203,10 +195,6 @@ async function main() {
     "PASS: Owner approval persisted."
   );
 
-  /*
-   * 5. Resume after owner approval.
-   */
-
   const completed =
     await resumeWorkflow(
       definition,
@@ -226,10 +214,6 @@ async function main() {
   console.log(
     "PASS: Approved workflow resumed and executed."
   );
-
-  /*
-   * 6. Verify approval was consumed.
-   */
 
   const consumed =
     await getApprovalRequest(
