@@ -465,12 +465,27 @@ export class LeoRuntime {
 
         } else {
 
-          plan =
-            await this.planner.planWithAI(
-              request.userMessage,
-              this.brain,
-              request.conversation
-            );
+          /*
+           * The first brain response is the authoritative conversational
+           * result when it contains no executable action. Do not call the
+           * structured action planner again for ordinary conversation.
+           *
+           * A second AI planning pass here caused normal chat such as
+           * greetings and questions to be replaced by an action-planning
+           * response. Keeping conversation and action planning separate
+           * preserves natural dialogue while executable requests still
+           * flow through the governed action boundary.
+           */
+          return {
+            type:
+              "response",
+
+            response:
+              brainResponse.response,
+
+            brain:
+              brainResponse
+          };
         }
       }
     }
