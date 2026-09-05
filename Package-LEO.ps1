@@ -9,7 +9,7 @@ New-Item -ItemType Directory -Path $Stage | Out-Null
 
 $exclude = @(
   "node_modules", ".git", ".env", ".env.*",
-  "LEO-1.1.0-windows.zip", "runtime", "backups", "logs"
+  "LEO-1.1.0-windows.zip", "runtime", "workspace", "backups", "logs"
 )
 
 Get-ChildItem -LiteralPath $Root -Force | Where-Object {
