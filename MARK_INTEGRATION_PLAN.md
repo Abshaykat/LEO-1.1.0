@@ -48,3 +48,16 @@ No repositories named Mark-LIII, Mark-LIV, or Mark-LV were found under FatihMake
 - dashboard/UI
 
 Only cataloged capabilities are candidates. Candidate does not mean integrated or production-ready.
+
+
+## Security quarantine rule
+
+Mark-derived code is treated as untrusted third-party source until reviewed. No Mark repository is vendored, copied wholesale, imported at runtime, or granted L.E.O. authority automatically. Mark-derived capabilities must enter through reviewed adapters and the L.E.O. capability registry. A capability is inactive by default and cannot execute until its permission policy, approval requirements, verification contract, audit behavior, dependency review, and targeted security tests pass.
+
+Repository isolation rules:
+- Mark source repositories remain external references; L.E.O. does not execute code directly from them.
+- No automatic GitHub sync, remote code execution, plugin auto-install, dynamic import, or dependency auto-upgrade from Mark sources.
+- No adapter may grant permissions, modify security policy, alter approval rules, or self-register executable authority.
+- Network-facing and computer-control adapters are deny-by-default until explicitly enabled and tested.
+- Integration commits stay on the migration branch until local runtime/security acceptance is performed on the owner's PC.
+- Main branch remains unchanged during migration; no automatic merge is permitted.
