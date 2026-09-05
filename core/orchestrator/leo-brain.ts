@@ -380,7 +380,12 @@ export class LeoBrain {
 
     const response =
       parsedConversation?.type === "response"
-        ? parsedConversation.response
+        ? (
+            parsedConversation.response ??
+            conversationalFallback(
+              request.userMessage
+            )
+          )
         : parsedConversation
           ? conversationalFallback(
               request.userMessage
