@@ -104,12 +104,22 @@ Consequential tools remain approval-gated.
 - Web approval UI
 - Regression test coverage
 
+### Governed agent integration boundaries
+
+The AI Workforce now explicitly assigns provider-neutral, approval-gated integration capabilities to the appropriate agents:
+
+- Marketing AI: Meta Ads, TikTok Ads and Google Ads
+- Trading AI: broker/trading
+- E-commerce AI: store, CRM, courier and payment
+
+These boundaries are implemented and regression-tested. Live provider execution still requires the owner to configure the relevant provider adapter, credentials and data source. No live API success is simulated.
+
 ### Foundation only, not falsely claimed as fully integrated
 
-- Meta Ads / TikTok Ads / Google Ads execution
-- Broker/trading execution
+- Live Meta Ads / TikTok Ads / Google Ads provider execution
+- Live broker/trading provider execution
 - Mobile-device control
-- Provider-specific CRM/courier/payment integrations
+- Provider-specific CRM/courier/payment API execution
 
 These require current external API contracts, credentials, and explicit provider adapters. L.E.O. must not pretend that such an integration exists when it is not configured.
 
@@ -125,4 +135,4 @@ npm test
 npm run test:web-e2e
 ```
 
-Only after those pass should the repository be backed up and pushed.
+The final Windows workflow also verifies encrypted backup integrity and checks the generated ZIP for excluded runtime state and secrets.\n\nOnly after those pass should the repository be backed up and pushed.
