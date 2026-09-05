@@ -205,6 +205,30 @@ createDefaultCapabilityRegistry():
       ]
   });
 
+  const controlledIntegrations = [
+    ["integration.marketing.meta_ads", "Meta Ads controlled adapter boundary", ["marketing", "meta", "ads"]],
+    ["integration.marketing.tiktok_ads", "TikTok Ads controlled adapter boundary", ["marketing", "tiktok", "ads"]],
+    ["integration.marketing.google_ads", "Google Ads controlled adapter boundary", ["marketing", "google", "ads"]],
+    ["integration.trading.broker", "Broker/trading controlled adapter boundary", ["trading", "broker", "risk"]],
+    ["integration.business.crm", "CRM controlled adapter boundary", ["business", "crm"]],
+    ["integration.business.courier", "Courier/shipment controlled adapter boundary", ["business", "courier", "shipment"]],
+    ["integration.business.payment", "Payment gateway controlled adapter boundary", ["business", "payment"]],
+    ["integration.ecommerce.store", "E-commerce/store controlled adapter boundary", ["ecommerce", "store"]]
+  ] as const;
+
+  for (const [id, name, tags] of controlledIntegrations) {
+    registry.register({
+      id,
+      name,
+      description:
+        "Provider-neutral, owner-controlled integration boundary. Live execution requires an explicitly configured provider adapter, credentials, approval and verification.",
+      kind: "integration",
+      status: "available",
+      tags,
+      consequential: true
+    });
+  }
+
   registry.register({
     id:
       "browser.interact",
