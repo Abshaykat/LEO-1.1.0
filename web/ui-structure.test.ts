@@ -1,8 +1,13 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
+import path from "node:path";
 
 async function main(): Promise<void> {
-  const html = await readFile(new URL("./index.html", import.meta.url), "utf8");
+  const html = await readFile(
+    path.join(process.cwd(), "web", "index.html"),
+    "utf8"
+  );
+
   const required = [
     "L.E.O. 1.1.0",
     "AI Intelligence Hub",
@@ -17,10 +22,16 @@ async function main(): Promise<void> {
     "/api/approve",
     "/api/health"
   ];
+
   for (const marker of required) {
     assert(html.includes(marker), "UI is missing required marker: " + marker);
   }
-  assert(!html.includes("healthScore").valueOf() || html.includes('textContent="OK"'), "UI must not fabricate a numeric health score.");
+
+  assert(
+    html.includes('id="healthScore">OK'),
+    "UI must not present a fabricated numeric health score."
+  );
+
   console.log("PASS: L.E.O. owner dashboard structure and governance markers.");
 }
 
