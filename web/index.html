@@ -73,9 +73,9 @@ const chat=document.getElementById("chat"),input=document.getElementById("input"
 const conversation=JSON.parse(localStorage.getItem("leo-conversation-v1")||"[]");
 function nowLabel(){return new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Dhaka",dateStyle:"medium",timeStyle:"short"}).format(new Date())}
 function renderClock(){const el=document.getElementById("liveClock");if(el)el.textContent="Bangladesh time · "+nowLabel()}
-function addMsg(t,c,stamp=nowLabel()){const d=document.createElement("div");d.className="msg "+c;d.innerHTML="<div>"+esc(t)+"</div><small style=\"display:block;margin-top:5px;color:var(--muted);font-size:10px\">"+esc(stamp)+"</small>";chat.appendChild(d);chat.scrollTop=chat.scrollHeight;if(c==="leo")speakLeo(String(t))}
+function addMsg(t,c,stamp=nowLabel(),speak=true){const d=document.createElement("div");d.className="msg "+c;d.innerHTML="<div>"+esc(t)+"</div><small style=\"display:block;margin-top:5px;color:var(--muted);font-size:10px\">"+esc(stamp)+"</small>";chat.appendChild(d);chat.scrollTop=chat.scrollHeight;if(c==="leo"&&speak)speakLeo(String(t))}
 function saveConversation(){localStorage.setItem("leo-conversation-v1",JSON.stringify(conversation.slice(-20)))}
-function renderSavedConversation(){for(const m of conversation){addMsg(m.content,m.role==="user"?"user":"leo",m.timestamp||nowLabel())}}
+function renderSavedConversation(){for(const m of conversation){addMsg(m.content,m.role==="user"?"user":"leo",m.timestamp||nowLabel(),false)}}
 renderSavedConversation();renderClock();setInterval(renderClock,1000);
 function detectSpeechLanguage(text){return /[\u0980-\u09FF]/.test(text)?"bn-BD":/\b(?:ami|tumi|kemon|acho|ki|tomar|amar|bujhlam|bolo|korbo|korbe|koro)\b/i.test(text)?"en-US":"en-US"}
 function speakLeo(text){if(!("speechSynthesis" in window)||!text.trim())return;window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang=detectSpeechLanguage(text);u.rate=0.96;u.pitch=1;window.speechSynthesis.speak(u)}
