@@ -1,30 +1,27 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from .intent import infer_intent
-from .router import BrainRouter
-from ..conversation.router import ConversationRouter, ConversationContext
+from .fast_router import FastRouter, RouteResult
+from .context import ContextItem, ContextSelector
+from .model_router import ModelRouter, ModelResult
 
 @dataclass(frozen=True)
-class BrainResult:
-    response: str | None
-    context: ConversationContext
-    intent_goal: str
-    action_candidate: bool
-    fast_path: bool
+class PipelineResult:
+    route: RouteResult
+    model: ModelResult | None = None
+    context: tuple[ContextItem, ...] = ()
 
 class BrainPipeline:
-    def __init__(self, router: BrainRouter, conversation: ConversationRouter) -> None:
-        self.router = router
-        self.conversation = conversation
+    def __init__(self, model_router: ModelRouter | None = None, context_selector: ContextSelector | None = None) -> None:
+        self.fast = FastRouter()
+        self.models = model_router
+        self.context = context_selector or ContextSelector()
 
-    def prepare(self, text: str) -> BrainResult:
-        fast = self.router.fast(text)
-        ctx = self.conversation.prepare(text)
-        intent = infer_intent(text)
-        return BrainResult(
-            response=fast.response,
-            context=ctx,
-            intent_goal=intent.goal,
-            action_candidate=intent.action or ctx.action_candidate,
-            fast_path=fast.handled,
-        )
+    async def respond(self, text: str, context: list[ContextItem] | None = None) -> PipelineResult:
+        route = self.fast.route(text)
+        selected = self.context.select(context or [])
+        if route.response is not None:
+            return PipelineResult(route, None, selected)
+        if self.models is None:
+            return PipelineResult(route, None, selected)
+        model = await self.models.complete(text)
+        return PipelineResult(route, model, selected)
