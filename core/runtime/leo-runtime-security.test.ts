@@ -121,6 +121,10 @@ async function expectDenied(
 
 async function main(): Promise<void> {
 
+  const workingDirectory =
+    process.env.LEO_COMMAND_WORKING_DIRECTORY?.trim() ||
+    "D:\\LEO";
+
   console.log(
     "=== L.E.O. RUNTIME SECURITY REGRESSION TEST ==="
   );
@@ -146,7 +150,7 @@ async function main(): Promise<void> {
             "Write-Output 'bad'",
 
           workingDirectory:
-            "D:\\LEO"
+            workingDirectory
         },
 
         reason:
@@ -196,7 +200,7 @@ async function main(): Promise<void> {
             "   ",
 
           workingDirectory:
-            "D:\\LEO"
+            workingDirectory
         },
 
         reason:
@@ -241,7 +245,7 @@ async function main(): Promise<void> {
             "Write-Output 'bad'",
 
           workingDirectory:
-            "D:\\LEO"
+            workingDirectory
         },
 
         reason:
