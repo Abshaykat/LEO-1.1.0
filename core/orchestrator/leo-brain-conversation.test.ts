@@ -11,7 +11,7 @@ class CaptureProvider implements AIProvider {
     return {
       provider: this.name,
       model: "test-model",
-      content: "Bujhlam. Ami tomar shathe naturally kotha bolchi."
+      content: "6 Sept 2026, 00:56\nTranslation and context:\n- User greeting\nSteps:\n1. Analyze the request\nProposed response:\nBujhlam. Ami tomar shathe naturally kotha bolchi."
     };
   }
 }
@@ -45,6 +45,12 @@ async function main(): Promise<void> {
 
   console.log("PASS: Bangla/Banglish/mixed language detection and live date-time context.");
   console.log("PASS: Recent conversation history is forwarded.");
+  assert.equal(provider.lastRequest?.messages.at(-1)?.content, "Hello LEO, kemon acho? tomar capability shomporke jante chai.");
+  assert.equal(provider.lastRequest?.maxTokens, 256);
+  assert.equal(
+    (await brain.respond({ userMessage: "Hello LEO, kemon acho? tomar capability shomporke jante chai." })).response,
+    "Bujhlam. Ami tomar shathe naturally kotha bolchi."
+  );
 }
 
 main().catch(error => {
