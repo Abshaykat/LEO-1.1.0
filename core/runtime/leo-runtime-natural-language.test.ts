@@ -46,6 +46,10 @@ class NaturalLanguageProvider
     this.lastRequest =
       request;
 
+    const workingDirectory =
+      process.env.LEO_COMMAND_WORKING_DIRECTORY?.trim() ||
+      "D:\\LEO";
+
     return {
       content:
         JSON.stringify({
@@ -60,8 +64,7 @@ class NaturalLanguageProvider
               command:
                 'Write-Output "Natural language runtime works"',
 
-              workingDirectory:
-                "D:\\LEO"
+              workingDirectory
             },
 
             reason:
