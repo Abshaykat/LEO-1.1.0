@@ -12,8 +12,8 @@ import {
   getApprovalRequest
 } from "../core/approvals/approval-engine.ts";
 
-const HOST = "127.0.0.1";
-const PORT = 3000;
+const HOST = process.env.LEO_UI_HOST?.trim() || "127.0.0.1";
+const PORT = Number(process.env.LEO_UI_PORT || "3000");
 
 const MAX_BODY_BYTES = 64 * 1024;
 
@@ -247,7 +247,7 @@ async function handleChat(
   const result =
     await runtime.process({
       userMessage,
-      source: "text",
+      source: body.source === "voice" ? "voice" : "text",
       ownerAuthToken: UI_TOKEN,
       conversation
     });
@@ -367,6 +367,12 @@ async function handleApprove(
     );
   }
 }
+export type RemoteLeoRequest = { userMessage: string; source?: "text" | "voice"; ownerId?: string; approvalId?: string; traceId?: string; conversation?: Parameters<LeoBrain["respond"]>[0]["conversation"] };
+
+export async function processLeoRemote(request: RemoteLeoRequest) {
+  return runtime.process({ ...request, ownerAuthToken: UI_TOKEN });
+}
+
 export function createLeoServer() {
   return createServer(
     async (request, response) => {
