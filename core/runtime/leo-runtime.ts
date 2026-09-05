@@ -77,6 +77,36 @@ export interface LeoRuntimeRequest {
   >[0]["conversation"];
 }
 
+/*
+ * Runtime intent gate.
+ *
+ * Ordinary conversation must stay conversational even when the local model
+ * hallucinates a workflow/action JSON object. Only requests containing a
+ * clear executable intent are allowed into the structured action planner.
+ * This is a safety/usability gate, not an authorization mechanism.
+ */
+function looksLikeExecutableRequest(
+  input: string
+): boolean {
+  const text =
+    input.trim().toLowerCase();
+
+  if (!text) {
+    return false;
+  }
+
+  const executableIntent =
+    /\b(?:open|close|run|execute|create|make|write|read|edit|delete|remove|move|copy|rename|install|uninstall|start|stop|restart|shutdown|sleep|test|check|fix|repair|update|build|deploy|clone|commit|push|pull|checkout|browse|visit|click|download|upload|launch|kill|terminate|automate|schedule|run|powershell|power\s*shell|cmd|command|notepad|github|git|docker|browser|file|folder|workflow|script|terminal)\b/i;
+
+  const banglaExecutableIntent =
+    /(খুলো|খুলে|চালাও|রান|এক্সিকিউট|করো|করে দাও|তৈরি করো|বানাও|লিখো|পড়ো|পড়ো|এডিট|ডিলিট|মুছে|সরাও|কপি|নাম বদল|ইনস্টল|আনইনস্টল|শুরু করো|বন্ধ করো|রিস্টার্ট|শাটডাউন|ঘুম|টেস্ট করো|চেক করো|ফিক্স করো|ঠিক করো|আপডেট করো|বিল্ড করো|ডিপ্লয়|ক্লোন|কমিট|পুশ|পুল|ব্রাউজার|ফাইল|ফোল্ডার|ওয়ার্কফ্লো|ওয়ার্কফ্লো|স্ক্রিপ্ট|কমান্ড|পাওয়ারশেল|পাওয়ারশেল|সিএমডি|নোটপ্যাড|গিটহাব|গিট|ডকার)/i;
+
+  return (
+    executableIntent.test(text) ||
+    banglaExecutableIntent.test(text)
+  );
+}
+
 export type LeoRuntimeResult =
   | {
       type: "response";
@@ -445,6 +475,12 @@ export class LeoRuntime {
                 .join("\n")
             : undefined;
 
+        /*
+         * First answer normally as a conversational assistant.
+         * Only clear executable intent is allowed to trigger the
+         * structured action planner. This prevents ordinary questions
+         * such as "How are you?" or "Who am I?" from becoming workflows.
+         */
         brainResponse =
           await this.brain.respond({
             userMessage:
@@ -457,24 +493,44 @@ export class LeoRuntime {
           });
 
         if (
-          brainResponse.actionPlan
+          !looksLikeExecutableRequest(
+            request.userMessage
+          )
         ) {
+          return {
+            type:
+              "response",
 
+            response:
+              brainResponse.response,
+
+            brain:
+              brainResponse
+          };
+        }
+
+        const actionPlan =
+          await this.planner.planWithAI(
+            request.userMessage,
+            this.brain,
+            request.conversation,
+            memoryContext
+          );
+
+        if (
+          actionPlan.type ===
+          "action" ||
+          actionPlan.type ===
+          "workflow"
+        ) {
           plan =
-            brainResponse.actionPlan;
+            actionPlan;
 
         } else {
-
           /*
-           * The first brain response is the authoritative conversational
-           * result when it contains no executable action. Do not call the
-           * structured action planner again for ordinary conversation.
-           *
-           * A second AI planning pass here caused normal chat such as
-           * greetings and questions to be replaced by an action-planning
-           * response. Keeping conversation and action planning separate
-           * preserves natural dialogue while executable requests still
-           * flow through the governed action boundary.
+           * If the action planner cannot construct a governed action,
+           * preserve the conversational answer instead of exposing an
+           * internal planner fallback to the owner.
            */
           return {
             type:
@@ -488,7 +544,6 @@ export class LeoRuntime {
           };
         }
       }
-    }
 
     if (plan.type === "response") {
 
