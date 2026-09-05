@@ -6,6 +6,10 @@ const context = {
   ownerAuthenticated: true
 };
 
+const leoRoot =
+  process.env.LEO_COMMAND_WORKING_DIRECTORY?.trim() ||
+  "D:\\LEO";
+
 async function expectExecutionFailure(
   name: string,
   request: any
@@ -55,7 +59,7 @@ async function main() {
       toolName: "pc.read_file",
       parameters: {
         path:
-          "D:\\LEO\\..\\Windows\\System32\\drivers\\etc\\hosts"
+          `${leoRoot}\\..\\Windows\\System32\\drivers\\etc\\hosts`
       },
       reason: "Test AI read-file path boundary.",
       context
@@ -68,7 +72,7 @@ async function main() {
       toolName: "pc.write_file",
       parameters: {
         path:
-          "D:\\LEO\\..\\outside-ai-file-test.txt",
+          `${leoRoot}\\..\\outside-ai-file-test.txt`,
         content:
           "SECURITY TEST"
       },
@@ -95,7 +99,7 @@ async function main() {
       toolName: "pc.write_file",
       parameters: {
         path:
-          "D:\\LEO\\workspace\\security-test.txt"
+          `${leoRoot}\\workspace\\security-test.txt`
       },
       reason: "Test AI write-file content validation.",
       context
@@ -106,7 +110,7 @@ async function main() {
     toolName: "pc.delete_file",
     parameters: {
       path:
-        "D:\\LEO\\workspace\\security-test.txt"
+        `${leoRoot}\\workspace\\security-test.txt`
     },
     reason: "Test unsupported AI file tool.",
     context
@@ -127,7 +131,7 @@ async function main() {
   const validRead = {
     toolName: "pc.read_file",
     parameters: {
-      path: "D:\\LEO\\README.md"
+      path: `${leoRoot}\\README.md`
     },
     reason: "Verify valid approved AI read remains functional.",
     context
