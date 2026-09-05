@@ -102,9 +102,13 @@ async function main(): Promise<void> {
     "AI did not provide a command."
   );
 
+  const configuredWorkingDirectory =
+    process.env.LEO_COMMAND_WORKING_DIRECTORY?.trim() ||
+    "D:\\LEO";
+
   assert(
     parameters.workingDirectory ===
-      process.env.LEO_COMMAND_WORKING_DIRECTORY?.trim() || "D:\\LEO",
+      configuredWorkingDirectory,
     "AI did not preserve the controlled working directory."
   );
 
