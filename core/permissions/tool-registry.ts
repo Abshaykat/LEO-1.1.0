@@ -59,6 +59,28 @@ const tools: ToolDefinition[] = [
     aiEnabled: true
   },
   {
+    name: "pc.run_powershell",
+    description: "Execute an owner-approved PowerShell script or command on Windows.",
+    consequence: "The supplied PowerShell code will execute on the owner's computer.",
+    risk: "high",
+    permissions: ["execute_commands"],
+    requiresApproval: true,
+    affectsExternalSystems: false,
+    destructive: false,
+    aiEnabled: true
+  },
+  {
+    name: "pc.run_cmd",
+    description: "Execute an owner-approved Windows Command Prompt command.",
+    consequence: "The supplied CMD command will execute on the owner's computer.",
+    risk: "high",
+    permissions: ["execute_commands"],
+    requiresApproval: true,
+    affectsExternalSystems: false,
+    destructive: false,
+    aiEnabled: true
+  },
+  {
     name: "pc.run_command",
     description: "Execute a policy-checked command on the owner's computer.",
     consequence: "The command will execute on the owner's computer.",
