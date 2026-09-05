@@ -1,5 +1,7 @@
+import path from "node:path";
 import { execute } from "./execution-engine.ts";
 import { approveRequest } from "../approvals/approval-engine.ts";
+import { LEO_ROOT } from "../config/leo-config.ts";
 
 const context = {
   source: "system" as const,
@@ -27,7 +29,7 @@ async function main() {
   const readRequest = {
     toolName: "pc.read_file",
     parameters: {
-      path: "D:\\LEO\\README.md"
+      path: path.join(LEO_ROOT, "README.md")
     },
     reason: "Read the L.E.O. README.",
     context
@@ -64,7 +66,7 @@ async function main() {
   const writeResult = await approveAndExecute({
     toolName: "pc.write_file",
     parameters: {
-      path: "D:\\LEO\\workspace\\execution-test.txt",
+      path: path.join(LEO_ROOT, "workspace", "execution-test.txt"),
       content: "L.E.O. owner approval test.\n"
     },
     reason: "Write an authorized workspace test file.",
