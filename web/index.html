@@ -22,7 +22,7 @@
 
 <section class="grid">
  <aside class="card health">
-  <h3>System Health</h3><div class="orb"><div><strong id="healthScore">--</strong><span id="healthLabel">checking</span></div></div>
+  <h3>System Health</h3><div class="orb"><div><strong id="healthScore">OK</strong><span id="healthLabel">checking</span></div></div>
   <div class="healthrow"><span>Security</span><b>Governed</b></div><div class="healthrow"><span>Approval</span><b>Required</b></div><div class="healthrow"><span>Memory</span><b>Local</b></div><div class="healthrow"><span>Audit</span><b>Enabled</b></div>
  </aside>
 
@@ -71,7 +71,7 @@ function approval(r){const b=document.createElement("div");b.className="approval
 function addResult(r){if(r.type==="approval_required"){addMsg(r.response||"Approval required.","leo");approval(r);return}if(r.type==="denied"){addMsg("DENIED: "+(r.response||""),"leo");return}addMsg((r.response||"")+(r.result?"\n\n"+JSON.stringify(r.result,null,2):""),"leo")}
 async function sendMessage(){const m=input.value.trim();if(!m)return;if(!token.value.trim()){addMsg("Enter the L.E.O. UI token.","leo");return}input.value="";addMsg(m,"user");send.disabled=true;addTimeline("Owner request",m);try{const x=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json","x-leo-token":token.value.trim()},body:JSON.stringify({userMessage:m,conversation})});const d=await x.json();if(!x.ok)throw Error(d.error||"Request failed");if(d.type==="response"){conversation.push({role:"user",content:m},{role:"assistant",content:d.response})}addResult(d)}catch(e){addMsg("Error: "+e.message,"leo")}finally{send.disabled=false;input.focus()}}
 send.onclick=sendMessage;input.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendMessage()}});
-fetch("/api/health").then(r=>r.json()).then(d=>{status.textContent=(d.provider||"local")+" · "+(d.model||"configured")+" · ONLINE";document.getElementById("healthScore").textContent="98";document.getElementById("healthLabel").textContent="Operational";addTimeline("L.E.O. online",String(d.provider||"Local provider")+" ready")}).catch(()=>{status.textContent="OFFLINE";document.getElementById("healthScore").textContent="--";document.getElementById("healthLabel").textContent="offline";addTimeline("Health check","Local server unavailable")});
+fetch("/api/health").then(r=>r.json()).then(d=>{status.textContent=(d.provider||"local")+" · "+(d.model||"configured")+" · ONLINE";document.getElementById("healthScore").textContent="OK";document.getElementById("healthLabel").textContent="Operational";addTimeline("L.E.O. online",String(d.provider||"Local provider")+" ready")}).catch(()=>{status.textContent="OFFLINE";document.getElementById("healthScore").textContent="--";document.getElementById("healthLabel").textContent="offline";addTimeline("Health check","Local server unavailable")});
 addTimeline("Governance active","Owner approval and audit boundaries enabled");addTimeline("Agent workforce","Controlled roles available");
 </script>
 </body></html>
