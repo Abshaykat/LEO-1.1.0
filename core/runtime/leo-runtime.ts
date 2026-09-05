@@ -510,6 +510,7 @@ export class LeoRuntime {
         }
 
         const actionPlan =
+          brainResponse.actionPlan ??
           await this.planner.planWithAI(
             request.userMessage,
             this.brain,
