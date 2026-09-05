@@ -1,3 +1,5 @@
+import { DurableObject } from "cloudflare:workers";
+
 export interface Env { RELAY: DurableObjectNamespace; REMOTE_TOKEN: string; }
 type Role = "pc" | "mobile";
 
