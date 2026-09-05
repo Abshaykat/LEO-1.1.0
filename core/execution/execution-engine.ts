@@ -147,7 +147,7 @@ function validateCommand(command: unknown): string {
   return normalized;
 }
 
-async function executeRunCommand(parameters: unknown): Promise<unknown> {
+async function executeShell(parameters: unknown, shell: "powershell" | "cmd"): Promise<unknown> {
   const p = objectParams(parameters);
   const command = validateCommand(p.command);
   const cwd =
@@ -216,7 +216,7 @@ const executor: ToolExecutor = async (tool: ToolDefinition, parameters: unknown)
     case "pc.read_file": return executeReadFile(parameters);
     case "pc.write_file": return executeWriteFile(parameters);
     case "pc.list_directory": return executeListDirectory(parameters);
-    case "pc.run_command": return executeRunCommand(parameters);
+    case "pc.run_command": return executeShell(parameters, "powershell");\n    case "pc.run_powershell": return executeShell(parameters, "powershell");\n    case "pc.run_cmd": return executeShell(parameters, "cmd");
     case "browser.open": return openBrowser(objectParams(parameters).url);
     case "browser.search": return searchBrowser(objectParams(parameters).query);
     case "web.fetch": return fetchPublicPage(objectParams(parameters).url);
