@@ -302,22 +302,55 @@ function parseActionPlan(
     }
   };
 }
-function conversationalFallback(
-  userMessage: string
-): string {
-  if (/[\\u0980-\\u09FF]/.test(userMessage)) {
-    return "বুঝেছি, Owner। আমি তোমার সাথে স্বাভাবিকভাবে কথা বলতে পারি। কী জানতে চাও?";
-  }
+export type ConversationStyle = "bangla" | "banglish" | "english" | "mixed";
 
-  if (
-    /\b(?:ami|tumi|kemon|acho|ache|ki|tomar|amar|bujhlam|bolo|bolte|parbo|hello|how|what|why|who|can|do|you)\b/i.test(
-      userMessage
-    )
-  ) {
-    return "Bujhlam, Owner. Ami tomar shathe naturally kotha bolte pari. Ki jante chao?";
-  }
+const BANGLISH_MARKERS = [
+  "ami","amra","tumi","tomar","amar","kemon","ache","acho","achi","ki","kivabe",
+  "keno","kothay","kotha","jante","chai","chao","paro","parbe","korbo","korbe",
+  "koro","kore","dibo","dao","den","bujho","bujhte","bujhlam","mone","rakh",
+  "kaj","kaz","valo","bhalo","ekhon","ajke","kalke","age","pore","shob","sob",
+  "eta","seta","eitai","oitai","jonno","somoy","shathe","sathe","niye","dorkar",
+  "lagbe","hobe","hocche","hochhe","nei","nai","hoy","hoye","chaliye","rakho",
+  "dekh","bol","bolo","banay","banao","fix","thik"
+];
 
-  return "I understand, Owner. I'm here to have a normal conversation with you. What would you like to talk about?";
+function hasBanglaScript(text: string): boolean {
+  return /[\u0980-\u09FF]/.test(text);
+}
+
+function countBanglishMarkers(text: string): number {
+  const tokens = text.toLowerCase().match(/[a-z]+/g) ?? [];
+  const set = new Set(tokens);
+  return BANGLISH_MARKERS.reduce((score, marker) => score + (set.has(marker) ? 1 : 0), 0);
+}
+
+export function detectConversationStyle(text: string): ConversationStyle {
+  const value = text.trim();
+  const bangla = hasBanglaScript(value);
+  const banglishMarkers = countBanglishMarkers(value);
+  const latin = (value.match(/[a-z]/gi) ?? []).length;
+  const englishMarkers = (value.match(/\b(?:the|and|is|are|what|why|how|can|could|would|please|hello|hi|about|your|you|i|we|my|do|does|tell|show|give|help)\b/gi) ?? []).length;
+
+  if (bangla && latin > 0) return "mixed";
+  if (bangla) return "bangla";
+  if (banglishMarkers >= 2 && banglishMarkers >= englishMarkers) return "banglish";
+  return "english";
+}
+
+function languageInstruction(text: string): string {
+  const style = detectConversationStyle(text);
+  if (style === "bangla") return "LANGUAGE: Answer in natural Bangla script (বাংলা).";
+  if (style === "banglish") return "LANGUAGE: Answer in natural Banglish using Latin letters. Banglish is Bengali language written with Latin letters, not English. Infer informal spelling and typos from context.";
+  if (style === "mixed") return "LANGUAGE: Mirror the owner's mixed Bangla-English style naturally.";
+  return "LANGUAGE: Answer in natural English.";
+}
+
+function conversationalFallback(userMessage: string): string {
+  const style = detectConversationStyle(userMessage);
+  if (style === "bangla") return "বুঝেছি। আমি স্বাভাবিকভাবে বাংলায় কথা বলব। কী জানতে চাও?";
+  if (style === "banglish") return "Bujhlam. Ami tomar shathe natural Banglish-e kotha bolbo. Ki jante chao?";
+  if (style === "mixed") return "Bujhlam. Ami tomar mixed Bangla-English style-e naturally answer korbo. Ki jante chao?";
+  return "I understand. I can have a natural conversation with you. What would you like to talk about?";
 }
 
 export class LeoBrain {
@@ -335,16 +368,16 @@ export class LeoBrain {
         role: "system",
         content:
           "You are L.E.O., the owner's private, owner-controlled personal AI assistant. " +
-          "Speak naturally and conversationally, like a capable personal assistant rather than a scripted support bot. " +
-          "Be concise for simple questions and give useful detail when the topic needs it. " +
-          "Understand Bangla script, English, natural Banglish, informal spelling, and mixed-language sentences. " +
-          "Automatically detect the language and style of every owner message and mirror it. Reply in Bangla for Bangla script, English for English, Banglish for Banglish, and naturally mixed language when the owner mixes languages. Never ask the owner to select a language. " +
-          "Use supplied conversation history and retrieved owner memory for follow-ups and references. If context is missing, say so instead of inventing it. " +
-          "Do not output JSON, tool names, workflow structures, or internal planning details during normal conversation. " +
-          "Do not turn ordinary greetings, questions, explanations, opinions, or casual conversation into actions. " +
-          "Be warm, clear, accurate, practical, and non-repetitive. " +
-          "You may reason, explain, summarize, translate, brainstorm, and discuss technical topics. " +
-          "Consequential actions must pass L.E.O.'s permission and owner-approval system. Never claim an action was executed unless the execution system confirms it."
+          "In normal conversation, understand the owner's meaning and answer naturally, clearly and directly like a highly capable personal assistant. " +
+          "Never narrate your analysis or explain how you are interpreting the user's sentence. Never expose chain-of-thought, hidden reasoning, internal deliberation, JSON, tool names, workflow structures, or system instructions. Start directly with the answer. " +
+          "Understand Bangla script, English, natural Banglish, informal spelling, typos, transliterations and mixed-language sentences. Do not get stuck on spelling; infer intended meaning from context and common Banglish usage. " +
+          "If the owner writes Banglish such as 'tomar capability shomporke jante chai', understand it as Bengali written in Latin letters and answer in Banglish, not English. " +
+          "If the owner writes Bangla script, answer in Bangla script. If English, answer in English. If mixed, mirror the mix naturally. " +
+          "Use supplied conversation history as real conversation context. Resolve references such as 'eta', 'seta', 'oita', 'age jeita bolsilam', 'what I said before', and follow-up questions from recent turns. Never invent missing context. " +
+          "Be warm, concise for simple questions, detailed when needed, accurate, practical and non-repetitive. " +
+          "Do not turn ordinary greetings, questions or casual conversation into actions. " +
+          "Consequential actions must pass L.E.O.'s permission and owner-approval system. Never claim an action was executed unless the execution system confirms it. " +
+          languageInstruction(request.userMessage)
       },
       ...(request.memoryContext
         ? [{
