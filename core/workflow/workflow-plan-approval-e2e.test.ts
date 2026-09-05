@@ -41,6 +41,10 @@ async function main(): Promise<void> {
   const workflowId =
     "phase-3b4-multi-step-approval-e2e";
 
+  const workingDirectory =
+    process.env.LEO_COMMAND_WORKING_DIRECTORY?.trim() ||
+    "D:\\LEO";
+
   const executionContext: ExecutionContext = {
     source: "system",
     ownerAuthenticated: true
@@ -65,7 +69,7 @@ async function main(): Promise<void> {
             command:
               'Write-Output "Workflow step 1 executed"',
             workingDirectory:
-              "D:\\LEO"
+              workingDirectory
           },
 
           reason:
@@ -85,7 +89,7 @@ async function main(): Promise<void> {
             command:
               'Write-Output "Workflow step 2 executed"',
             workingDirectory:
-              "D:\\LEO"
+              workingDirectory
           },
 
           reason:
