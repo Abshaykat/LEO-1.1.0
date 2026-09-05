@@ -45,6 +45,39 @@ const sessions = new Map<
 
 const approvalsInFlight = new Set<string>();
 
+type ActivityJob = {
+  jobId: string;
+  title: string;
+  status: "running" | "waiting_approval" | "completed" | "failed";
+  progress: number | null;
+  currentStep: string;
+  startedAt: string;
+  updatedAt: string;
+  source: "local" | "remote";
+  result?: string;
+};
+
+const activityJobs = new Map<string, ActivityJob>();
+
+function updateActivity(
+  jobId: string,
+  patch: Partial<ActivityJob>
+): void {
+  const current = activityJobs.get(jobId);
+  if (!current) return;
+  activityJobs.set(jobId, {
+    ...current,
+    ...patch,
+    updatedAt: new Date().toISOString()
+  });
+}
+
+export function getLeoActivity(): ActivityJob[] {
+  return [...activityJobs.values()]
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+    .slice(0, 50);
+}
+
 const UI_TOKEN =
   process.env.LEO_UI_TOKEN ??
   randomBytes(24).toString("hex");
@@ -244,6 +277,23 @@ async function handleChat(
       ? body.conversation
       : undefined;
 
+  const jobId = randomBytes(12).toString("hex");
+  activityJobs.set(jobId, {
+    jobId,
+    title: userMessage.slice(0, 120),
+    status: "running",
+    progress: 10,
+    currentStep: "Request accepted and governance checks started",
+    startedAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    source: "local"
+  });
+
+  updateActivity(jobId, {
+    progress: 35,
+    currentStep: "Planning and capability selection"
+  });
+
   const result =
     await runtime.process({
       userMessage,
@@ -252,9 +302,12 @@ async function handleChat(
       conversation
     });
 
-  if (
-    result.type === "approval_required"
-  ) {
+  if (result.type === "approval_required") {
+    updateActivity(jobId, {
+      status: "waiting_approval",
+      progress: 50,
+      currentStep: "Waiting for owner approval"
+    });
 
     sessions.set(
       result.approvalId,
@@ -266,7 +319,16 @@ async function handleChat(
     );
   }
 
-  sendJson(response, 200, result);
+  if (result.type !== "approval_required") {
+    updateActivity(jobId, {
+      status: result.type === "denied" ? "failed" : "completed",
+      progress: result.type === "denied" ? 100 : 100,
+      currentStep: result.type === "denied" ? "Execution denied by governance" : "Execution and verification completed",
+      result: result.response
+    });
+  }
+
+  sendJson(response, 200, { ...result, jobId });
 }
 
 async function handleApprove(
@@ -336,6 +398,18 @@ async function handleApprove(
       session.traceId
     );
 
+    const jobId = randomBytes(12).toString("hex");
+    activityJobs.set(jobId, {
+      jobId,
+      title: session.userMessage.slice(0, 120),
+      status: "running",
+      progress: 65,
+      currentStep: "Owner approval consumed; executing approved action",
+      startedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      source: "local"
+    });
+
     const result =
       await runtime.process({
         userMessage:
@@ -358,7 +432,14 @@ async function handleApprove(
       approvalId
     );
 
-    sendJson(response, 200, result);
+    updateActivity(jobId, {
+      status: result.type === "denied" ? "failed" : "completed",
+      progress: 100,
+      currentStep: result.type === "denied" ? "Approved action was denied by execution policy" : "Execution and verification completed",
+      result: result.response
+    });
+
+    sendJson(response, 200, { ...result, jobId });
 
   } finally {
 
@@ -422,6 +503,14 @@ export function createLeoServer() {
           sendJson(response, 401, {
             error: "Unauthorized."
           });
+          return;
+        }
+
+        if (
+          request.url === "/api/activity" &&
+          request.method === "GET"
+        ) {
+          sendJson(response, 200, { jobs: getLeoActivity() });
           return;
         }
 
