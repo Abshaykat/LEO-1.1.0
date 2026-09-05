@@ -34,6 +34,8 @@ export class OllamaAIProvider implements AIProvider {
   private readonly maxTokens?: number;
   private readonly think?: boolean;
   private readonly preferredModels: string[];
+  private cachedModel?: string;
+  private modelCheckedAt = 0;
 
   constructor(
     options: OllamaAIProviderOptions = {}
@@ -59,6 +61,8 @@ export class OllamaAIProvider implements AIProvider {
 
   private async resolveModel(): Promise<string> {
     const configured = this.model.trim();
+    const now = Date.now();
+    if (this.cachedModel && now - this.modelCheckedAt < 30000) return this.cachedModel;
     try {
       const response = await fetch(`${this.baseUrl}/api/tags`);
       if (!response.ok) return configured;
@@ -68,8 +72,12 @@ export class OllamaAIProvider implements AIProvider {
           .map(model => model.name)
           .filter((name): name is string => typeof name === "string")
       );
-      if (installed.has(configured)) return configured;
-      return this.preferredModels.find(model => installed.has(model)) ?? configured;
+      const selected = installed.has(configured)
+        ? configured
+        : this.preferredModels.find(model => installed.has(model)) ?? configured;
+      this.cachedModel = selected;
+      this.modelCheckedAt = now;
+      return selected;
     } catch {
       return configured;
     }
@@ -98,8 +106,10 @@ export class OllamaAIProvider implements AIProvider {
 
             stream: false,
             think: this.think,
+            keep_alive: "10m",
 
             options: {
+              num_ctx: 4096,
               ...(this.temperature !== undefined
                 ? {
                     temperature:
