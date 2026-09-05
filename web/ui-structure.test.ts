@@ -58,6 +58,21 @@ async function main(): Promise<void> {
   );
 
   assert(
+    html.includes("liveClock"),
+    "Desktop UI must display live date/time."
+  );
+
+  assert(
+    html.includes("localStorage"),
+    "Desktop UI must preserve recent chat context across refreshes."
+  );
+
+  assert(
+    html.includes("timestamp"),
+    "Desktop UI must timestamp chat messages."
+  );
+
+  assert(
     html.includes('id="healthScore">OK'),
     "UI must not present a fabricated numeric health score."
   );
