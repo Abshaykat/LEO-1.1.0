@@ -93,7 +93,7 @@ async function main(): Promise<void> {
     command:
       'Write-Output "L.E.O. repair approved"',
     workingDirectory:
-      "D:\\LEO"
+        workingDirectory
   };
 
   /*
