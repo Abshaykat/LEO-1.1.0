@@ -544,6 +544,7 @@ export class LeoRuntime {
           };
         }
       }
+    }
 
     if (plan.type === "response") {
 
