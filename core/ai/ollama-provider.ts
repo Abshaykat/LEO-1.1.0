@@ -4,6 +4,8 @@
   AIResponse
 } from "./ai-provider.ts";
 
+interface OllamaTagResponse { models?: Array<{ name?: string }> }
+
 interface OllamaChatResponse {
   message?: {
     content?: string;
@@ -18,6 +20,8 @@ export interface OllamaAIProviderOptions {
   model?: string;
   temperature?: number;
   maxTokens?: number;
+  think?: boolean;
+  preferredModels?: string[];
 }
 
 export class OllamaAIProvider implements AIProvider {
@@ -28,6 +32,8 @@ export class OllamaAIProvider implements AIProvider {
   private readonly model: string;
   private readonly temperature?: number;
   private readonly maxTokens?: number;
+  private readonly think?: boolean;
+  private readonly preferredModels: string[];
 
   constructor(
     options: OllamaAIProviderOptions = {}
@@ -45,12 +51,35 @@ export class OllamaAIProvider implements AIProvider {
 
     this.maxTokens =
       options.maxTokens;
+    this.think =
+      options.think ?? false;
+    this.preferredModels =
+      options.preferredModels ?? ["qwen3:4b", "qwen3:1.7b"];
+  }
+
+  private async resolveModel(): Promise<string> {
+    const configured = this.model.trim();
+    try {
+      const response = await fetch(`${this.baseUrl}/api/tags`);
+      if (!response.ok) return configured;
+      const data = await response.json() as OllamaTagResponse;
+      const installed = new Set(
+        (data.models ?? [])
+          .map(model => model.name)
+          .filter((name): name is string => typeof name === "string")
+      );
+      if (installed.has(configured)) return configured;
+      return this.preferredModels.find(model => installed.has(model)) ?? configured;
+    } catch {
+      return configured;
+    }
   }
 
   async generate(
     request: AIRequest
   ): Promise<AIResponse> {
 
+    const model = await this.resolveModel();
     const response =
       await fetch(
         `${this.baseUrl}/api/chat`,
@@ -62,12 +91,13 @@ export class OllamaAIProvider implements AIProvider {
           },
 
           body: JSON.stringify({
-            model: this.model,
+            model,
 
             messages:
               request.messages,
 
             stream: false,
+            think: this.think,
 
             options: {
               ...(this.temperature !== undefined
@@ -112,7 +142,7 @@ export class OllamaAIProvider implements AIProvider {
       content,
       model:
         data.model ??
-        this.model,
+        model,
       provider:
         this.name,
       usage: {
