@@ -11,19 +11,25 @@ class StepResult:
     error: str | None = None
 
 class WorkflowEngine:
+    """Resumable workflow orchestration; execution authority stays with injected runner."""
     def __init__(self) -> None:
         self._paused: set[str] = set()
+        self._completed: dict[str, set[str]] = {}
 
     async def run(self, workflow: Workflow, execute: Callable[[str, dict[str, Any]], Awaitable[Any]]) -> list[StepResult]:
         results: list[StepResult] = []
         if workflow.id in self._paused:
             return results
+        done = self._completed.setdefault(workflow.id, set())
         for step in workflow.steps:
             if workflow.id in self._paused:
                 break
+            if step.id in done:
+                continue
             try:
                 output = await execute(step.capability, step.parameters)
                 results.append(StepResult(step.id, True, output))
+                done.add(step.id)
             except Exception as exc:
                 results.append(StepResult(step.id, False, error=str(exc)))
                 break
