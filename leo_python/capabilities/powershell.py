@@ -3,6 +3,7 @@ import asyncio
 import subprocess
 from pathlib import Path
 from typing import Any
+from ..security.powershell_policy import validate_powershell
 
 def _workspace(action: dict[str, Any]) -> Path:
     raw = action.get("parameters", {}).get("workspace")
@@ -19,15 +20,14 @@ async def list_workspace(action: dict[str, Any]) -> list[str]:
 
 async def run_powershell(action: dict[str, Any]) -> str:
     command = action.get("parameters", {}).get("command")
-    if not isinstance(command, str) or not command.strip():
-        raise ValueError("command is required")
+    valid, reason = validate_powershell(command)
+    if not valid:
+        raise PermissionError(reason)
     workspace = _workspace(action)
-    # Execution remains gated by the caller's approval/permission layer.
     completed = await asyncio.to_thread(
         subprocess.run,
         ["powershell.exe", "-NoProfile", "-NonInteractive", "-Command", command],
-        cwd=str(workspace), capture_output=True, text=True, timeout=30,
-        check=False,
+        cwd=str(workspace), capture_output=True, text=True, timeout=30, check=False,
     )
     if completed.returncode != 0:
         raise RuntimeError(f"PowerShell failed ({completed.returncode}): {completed.stderr.strip()}")
