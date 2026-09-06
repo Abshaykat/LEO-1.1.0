@@ -1,0 +1,26 @@
+name: LEO Python Mainline Gate
+on:
+  push:
+    branches: ["pure-python/mainline-integration"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test runner
+        run: python -m pip install --upgrade pip pytest
+      - name: Compile
+        run: python -m compileall -q leo_python
+      - name: Test
+        env:
+          PYTHONPATH: .
+        run: python -m pytest -q leo_python/tests
