@@ -7,4 +7,6 @@ class ExecutionGuard:
     def authorize(self,approval_id,action,*,requires_approval):
         if not requires_approval: return ExecutionDecision(True,"No approval required.")
         if not approval_id: return ExecutionDecision(False,"Owner approval is required.")
-        return ExecutionDecision(self.approvals.consume(approval_id,action),"Approved action integrity verified." if self.approvals.action_hash(action) else "Approval invalid.")
+        if not self.approvals.consume(approval_id,action):
+            return ExecutionDecision(False,"Approval missing, already consumed, or action changed.")
+        return ExecutionDecision(True,"Approved action integrity verified.")
