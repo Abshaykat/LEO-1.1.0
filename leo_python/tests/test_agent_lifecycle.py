@@ -1,16 +1,16 @@
 from leo_python.agents.factory import AgentFactory
 from leo_python.agents.types import AgentSpec
-
-def test_agent_lifecycle_never_self_authorizes():
-    f=AgentFactory()
-    spec=f.register_proposal(AgentSpec("research","research",("web.read",)))
+from leo_python.governance.approval import ApprovalStore
+def test_agent_lifecycle_requires_owner_approval():
+    f=AgentFactory(); spec=f.register_proposal(AgentSpec("research","research",("web.read",)))
     assert not spec.enabled and not spec.owner_approved
-    approved=f.approve("research")
+    approvals=ApprovalStore()
+    action={"capability":"agent.create","parameters":{"name":"research","purpose":"research","capabilities":["web.read"]}}
+    approval=approvals.issue("agent-1",action)
+    approved=f.approve("research",approval.approval_id,approvals)
     assert approved.enabled and approved.owner_approved
     updated=f.update("research",capabilities=("web.read","memory.read"))
     assert updated.capabilities==("web.read","memory.read")
-    disabled=f.disable("research")
-    assert not disabled.enabled
-    archived=f.archive("research")
-    assert not archived.enabled
+    assert not f.disable("research").enabled
+    assert not f.archive("research").enabled
     assert f.get("research") is None
