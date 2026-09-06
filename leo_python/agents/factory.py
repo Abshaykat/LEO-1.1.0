@@ -1,11 +1,10 @@
 from __future__ import annotations
 from dataclasses import replace
 from .types import AgentSpec
-from ..security.policy import ActionPolicy, Risk, evaluate, Decision
+from ..security.policy import ActionPolicy, Risk, evaluate
 
 class AgentFactory:
-    """Controlled agent lifecycle. Creation never silently grants authority."""
-
+    """Owner-controlled agent lifecycle. No operation grants authority implicitly."""
     def __init__(self) -> None:
         self._agents: dict[str, AgentSpec] = {}
 
@@ -14,15 +13,9 @@ class AgentFactory:
             raise ValueError("Agent name and purpose are required.")
         if spec.enabled or spec.owner_approved:
             raise ValueError("New agents must begin as unapproved proposals.")
+        if any(not c.strip() for c in spec.capabilities):
+            raise ValueError("Capability names must be non-empty.")
         return spec
-
-    def approve(self, name: str) -> AgentSpec:
-        spec = self._agents.get(name)
-        if spec is None:
-            raise KeyError(name)
-        updated = replace(spec, owner_approved=True, enabled=True)
-        self._agents[name] = updated
-        return updated
 
     def register_proposal(self, spec: AgentSpec) -> AgentSpec:
         self.propose(spec)
@@ -30,6 +23,38 @@ class AgentFactory:
             raise ValueError(f"Agent already exists: {spec.name}")
         self._agents[spec.name] = spec
         return spec
+
+    def approve(self, name: str) -> AgentSpec:
+        spec = self._agents[name]
+        decision, reason = evaluate(ActionPolicy(name=f"agent.create:{name}", risk=Risk.HIGH, creates_agent=True))
+        if decision.value != "require_approval":
+            raise PermissionError(reason)
+        updated = replace(spec, owner_approved=True, enabled=True)
+        self._agents[name] = updated
+        return updated
+
+    def update(self, name: str, *, capabilities: tuple[str, ...] | None = None,
+               memory_scope: str | None = None, purpose: str | None = None) -> AgentSpec:
+        spec = self._agents[name]
+        if not spec.owner_approved:
+            raise PermissionError("Only an approved agent can be updated.")
+        if capabilities is not None and any(not c.strip() for c in capabilities):
+            raise ValueError("Capability names must be non-empty.")
+        updated = replace(spec, capabilities=capabilities if capabilities is not None else spec.capabilities,
+                          memory_scope=memory_scope if memory_scope is not None else spec.memory_scope,
+                          purpose=purpose if purpose is not None else spec.purpose)
+        self._agents[name] = updated
+        return updated
+
+    def disable(self, name: str) -> AgentSpec:
+        spec = self._agents[name]
+        updated = replace(spec, enabled=False)
+        self._agents[name] = updated
+        return updated
+
+    def archive(self, name: str) -> AgentSpec:
+        spec = self._agents.pop(name)
+        return replace(spec, enabled=False)
 
     def get(self, name: str) -> AgentSpec | None:
         return self._agents.get(name)
