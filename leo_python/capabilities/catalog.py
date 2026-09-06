@@ -28,6 +28,13 @@ class CapabilityCatalog:
     def list(self) -> tuple[CapabilityDescriptor, ...]:
         return tuple(self._capabilities.values())
 
+    def is_registered(self, name: str) -> bool:
+        """Return availability metadata only; this is not an authorization decision."""
+        return self.discover(name) is not None
+
     def can_execute(self, name: str) -> bool:
-        capability = self.discover(name)
-        return capability is not None
+        """Compatibility alias for :meth:`is_registered`.
+
+        Execution authority is exclusively decided by ``CapabilityRunner``.
+        """
+        return self.is_registered(name)

@@ -1,0 +1,12 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "leo-python"
+version = "1.1.0"
+description = "Pure-Python governed runtime for L.E.O."
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+testpaths = ["leo_python/tests"]
