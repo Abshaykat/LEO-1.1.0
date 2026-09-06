@@ -6,4 +6,6 @@ class ConversationResult:
     text:str; language:str; intent:IntentResult
 class ConversationRouter:
     def route(self,text:str)->ConversationResult:
-        clean=normalize(text); return ConversationResult(clean,language_hint(clean),detect_intent(clean))
+        if not isinstance(text,str): raise TypeError("conversation text must be a string")
+        clean=normalize(text)
+        return ConversationResult(clean,language_hint(clean),detect_intent(clean))
