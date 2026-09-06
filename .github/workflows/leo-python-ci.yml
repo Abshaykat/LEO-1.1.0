@@ -4,6 +4,7 @@ on:
     branches: ["rewrite/pure-python-mark-leo"]
   pull_request:
     branches: ["main"]
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:
