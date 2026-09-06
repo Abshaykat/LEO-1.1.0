@@ -11,8 +11,11 @@ class AgentFactory:
         self.propose(spec)
         if spec.name in self._agents: raise ValueError("Agent already exists.")
         self._agents[spec.name]=spec; return spec
-    def approve(self,name):
+    def approve(self,name,approval_id,approvals):
         spec=self._agents[name]
+        action={"capability":"agent.approve","parameters":{"name":name}}
+        if not approval_id or not approvals.consume(approval_id,action):
+            raise PermissionError("Owner approval is required for agent deployment.")
         self._agents[name]=replace(spec,owner_approved=True,enabled=True); return self._agents[name]
     def update(self,name,**changes):
         spec=self._agents[name]
