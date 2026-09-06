@@ -13,10 +13,13 @@ async def test_pipeline_skips_model_for_fast_response():
     result=await p.respond("hello")
     assert result.route.fast_path
     assert result.model is None
+    assert result.conversation is not None
 
 @pytest.mark.asyncio
-async def test_pipeline_uses_model_for_unknown_input():
+async def test_pipeline_uses_model_for_unknown_input_and_keeps_language():
     p=BrainPipeline(ModelRouter([Provider()]))
-    result=await p.respond("explain this", [ContextItem("memory", .9)])
+    result=await p.respond("Chrome ta open koro", [ContextItem("memory", .9)])
     assert result.model.text=="model answer"
     assert result.context[0].text=="memory"
+    assert result.conversation.language=="banglish"
+    assert result.conversation.intent.action
